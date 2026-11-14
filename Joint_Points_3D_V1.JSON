@@ -1,0 +1,368 @@
+{
+  "format": "Joint_Points_3D",
+  "version": 4,
+  "model": "Duke_3D.glb",
+  "points": [
+    {
+      "name": "Pelvis",
+      "parent": null,
+      "x": 0.1232,
+      "y": -0.2839,
+      "z": -0.0443,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Spine",
+      "parent": "Pelvis",
+      "x": 0.1377,
+      "y": -0.178,
+      "z": -0.0518,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Chest",
+      "parent": "Spine",
+      "x": 0.109,
+      "y": -0.0673,
+      "z": -0.0589,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Neck",
+      "parent": "Chest",
+      "x": 0.1211,
+      "y": 0.0189,
+      "z": -0.0697,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Head",
+      "parent": "Neck",
+      "x": 0.1416,
+      "y": 0.1935,
+      "z": -0.0848,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Ear Left",
+      "parent": "Head",
+      "x": 0.0605,
+      "y": 0.4434,
+      "z": 0.0578,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Ear Right",
+      "parent": "Head",
+      "x": 0.1495,
+      "y": 0.3982,
+      "z": -0.2917,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Shoulder Left",
+      "parent": "Chest",
+      "x": 0.0927,
+      "y": -0.0373,
+      "z": 0.0952,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Elbow Left",
+      "parent": "Shoulder Left",
+      "x": 0.1225,
+      "y": -0.122,
+      "z": 0.1558,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wrist Left",
+      "parent": "Elbow Left",
+      "x": 0.1482,
+      "y": -0.1745,
+      "z": 0.1746,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Shoulder Right",
+      "parent": "Chest",
+      "x": 0.1383,
+      "y": -0.0655,
+      "z": -0.2136,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Elbow Right",
+      "parent": "Shoulder Right",
+      "x": 0.1764,
+      "y": -0.1449,
+      "z": -0.2433,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wrist Right",
+      "parent": "Elbow Right",
+      "x": 0.2185,
+      "y": -0.1992,
+      "z": -0.2541,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Left Base",
+      "parent": "Chest",
+      "x": 0.03,
+      "y": -0.0267,
+      "z": -0.1674,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Left Bend",
+      "parent": "Wing Left Base",
+      "x": 0.0446,
+      "y": -0.12,
+      "z": -0.2431,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Left Middle Fold",
+      "parent": "Wing Left Bend",
+      "x": 0.0544,
+      "y": -0.1822,
+      "z": -0.2935,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Left Tip",
+      "parent": "Wing Left Middle Fold",
+      "x": 0.0625,
+      "y": -0.234,
+      "z": -0.3356,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Right Base",
+      "parent": "Chest",
+      "x": -0.0015,
+      "y": -0.0136,
+      "z": 0.0102,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Right Bend",
+      "parent": "Wing Right Base",
+      "x": -0.0197,
+      "y": -0.0865,
+      "z": 0.1084,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Right Middle Fold",
+      "parent": "Wing Right Bend",
+      "x": -0.0319,
+      "y": -0.1351,
+      "z": 0.1739,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wing Right Tip",
+      "parent": "Wing Right Middle Fold",
+      "x": -0.042,
+      "y": -0.1756,
+      "z": 0.2284,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Hip Left",
+      "parent": "Pelvis",
+      "x": 0.1134,
+      "y": -0.2796,
+      "z": 0.0947,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Knee Left",
+      "parent": "Hip Left",
+      "x": 0.1726,
+      "y": -0.3522,
+      "z": 0.1183,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Ankle Left",
+      "parent": "Knee Left",
+      "x": 0.1217,
+      "y": -0.4277,
+      "z": 0.0867,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Hip Right",
+      "parent": "Pelvis",
+      "x": 0.1425,
+      "y": -0.2892,
+      "z": -0.1792,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Knee Right",
+      "parent": "Hip Right",
+      "x": 0.1874,
+      "y": -0.3611,
+      "z": -0.1736,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Ankle Right",
+      "parent": "Knee Right",
+      "x": 0.1464,
+      "y": -0.4286,
+      "z": -0.1743,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Tail Base",
+      "parent": "Pelvis",
+      "x": 0.0009,
+      "y": -0.3079,
+      "z": -0.0554,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Tail Middle",
+      "parent": "Tail Base",
+      "x": -0.184,
+      "y": -0.4167,
+      "z": 0.0497,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Tail Tip",
+      "parent": "Tail Middle",
+      "x": -0.3496,
+      "y": -0.3943,
+      "z": 0.3498,
+      "fwd": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "limits": {}
+}
