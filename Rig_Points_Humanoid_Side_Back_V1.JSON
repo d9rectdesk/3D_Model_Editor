@@ -1,0 +1,87 @@
+{
+ "canvas": 2048,
+ "layer_order_back_to_front": [
+  "Part_Foot_V1",
+  "Part_Shin_V1",
+  "Part_Thigh_V1",
+  "Part_Neck_V1",
+  "Part_Head_V1",
+  "Part_Torso_V1",
+  "Part_Arm_Upper_V1",
+  "Part_Arm_Fore_V1",
+  "Part_Hand_V1",
+  "Part_Head_Eyes_V1"
+ ],
+ "parts": {
+  "Part_Torso_V1": {
+   "pin": [
+    1062.0,
+    986.0
+   ],
+   "parent": null
+  },
+  "Part_Neck_V1": {
+   "pin": [
+    1062.0,
+    456.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Head_V1": {
+   "pin": [
+    1062.0,
+    456.0
+   ],
+   "parent": "Part_Neck_V1"
+  },
+  "Part_Head_Eyes_V1": {
+   "pin": [
+    1062.0,
+    456.0
+   ],
+   "parent": "Part_Head_V1"
+  },
+  "Part_Arm_Upper_V1": {
+   "pin": [
+    1024.0,
+    606.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Arm_Fore_V1": {
+   "pin": [
+    856.0,
+    624.0
+   ],
+   "parent": "Part_Arm_Upper_V1"
+  },
+  "Part_Hand_V1": {
+   "pin": [
+    586.0,
+    630.0
+   ],
+   "parent": "Part_Arm_Fore_V1"
+  },
+  "Part_Thigh_V1": {
+   "pin": [
+    1056.0,
+    1012.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Shin_V1": {
+   "pin": [
+    1056.0,
+    1436.0
+   ],
+   "parent": "Part_Thigh_V1"
+  },
+  "Part_Foot_V1": {
+   "pin": [
+    1062.0,
+    1774.0
+   ],
+   "parent": "Part_Shin_V1"
+  }
+ }
+}
