@@ -1,0 +1,23 @@
+Model Editor V14 - what changed (2026-11-15, Issue 2 gap)
+
+POINT DESCRIPTIONS. Every rig point now carries its own
+written description - what the point is and how it is used -
+inside the saved points file, so a point added by hand is
+still understood afterward.
+
+- In the 2D views, the Selected panel gains a Description
+  row under the Label. Pick a point, write what it is, and
+  the words belong to that point.
+- On the 3D view's point card, the selected point gains the
+  same Description field.
+- Save writes the description into the rig data file (2D)
+  and into the Joint Points file (3D), one per point.
+- Loading a rig file, or a set of parts with a rig file,
+  reads the descriptions back onto their points.
+- Undo, redo, and the browser autosave carry descriptions
+  too, so a restore never drops them.
+
+Everything from V13 stands: the points keep their placed
+positions, the 3D movement player (Snake and Spiral) plays
+over them, the views are separate, and the editor still
+opens empty with no model inside it.
