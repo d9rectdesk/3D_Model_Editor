@@ -1,8 +1,8 @@
 # 3D Model Editor
 
-The Model Editor is a rigging and model-editing tool that runs entirely in a web browser as a single page. Version 11 opens with nothing loaded — no model is built into the app. You open a glTF binary (.glb) file to start editing. A rigged GLB carries its own rig inside it: every part of the model carries the point it turns on and the part it hangs from, written into the file itself. Opening one shows the model in 3D with its joint points already placed, and builds a 2D paper-parts view for every view inside the file (front, back, side), with the points already on the parts. You check the points, drag them right if one is off, test the movement joint by joint, blacklist any angle a joint must never sit at, and save the rig — points, parents, limits, and blacklists — as one small file.
+The Model Editor is a rigging and model-editing tool that runs entirely in a web browser as a single page. Version 12 opens with nothing loaded — no model is built into the app. You open a glTF binary (.glb) file to start editing. A rigged GLB carries its own rig inside it: every part of the model carries the point it turns on and the part it hangs from, written into the file itself. Opening one shows the model in 3D with its joint points already placed, and builds a 2D paper-parts view for every view inside the file (front, back, side), with the points already on the parts. You check the points, drag them right if one is off, test the movement joint by joint, blacklist any angle a joint must never sit at, and save the rig — points, parents, limits, and blacklists — as one small file.
 
-Everything runs on your own computer. There is nothing to install and no account to make: download the Model Editor Version 11 HTML file and open it in a browser. The page loads the Three.js library from a public content delivery network, so it needs an internet connection the first time it opens.
+Everything runs on your own computer. There is nothing to install and no account to make: download the Model Editor Version 12 HTML file and open it in a browser. The page loads the Three.js library from a public content delivery network, so it needs an internet connection the first time it opens.
 
 ## The included example model
 
@@ -10,7 +10,8 @@ The human man in this repository is a complete paper character: front, back, and
 
 ## Files in this repository
 
-- Model_Editor_V11.HTML — the complete tool as one self-contained page, with no model inside it. Open it in a browser and open a GLB file to begin. Layers can be reordered in the app, paper rig points move on X and Y only, the model loads in the centre of the window, and the 3D stage background follows the light or dark appearance.
+- Model_Editor_V12.HTML — the complete tool as one self-contained page, with no model inside it. Open it in a browser and open a GLB file to begin. Front, back, and side are edited as separate views; layers can be reordered in the app; paper rig points move on X and Y only; the model loads in the centre of the window; the 3D stage background follows the light or dark appearance; and the app is tuned for Chrome.
+- Model_Editor_V12_Spec_V1.TXT — exactly what changed in Version 12.
 - Model_Editor_V11_Spec_V1.TXT — exactly what changed in Version 11.
 - Model_Editor_V10_Spec_V1.TXT — what changed in Version 10 and how the GLB rig format works.
 - Human_Man_Paper.GLB — the human man: front, back, and side paper layer sets in one rigged file.
