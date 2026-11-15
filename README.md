@@ -1,46 +1,26 @@
 # 3D Model Editor
 
-The 3D Model Editor is a rigging and model-editing tool that runs entirely in a web browser as a single page. It opens with Duke, a small dragon, already loaded as the included model. You place named points on the model to build its rig, face each point's forward arrow so the rig knows which way is front, bend the rig in Test Movement to prove the points work, sculpt the model's shape with push and pull brushes, and paint the model with a palette brush. Your points, forward facings, and movement limits save together in one small file that the tool loads back, and an edited model saves out as a standard glTF binary (.glb) file that other programs can open.
+The Model Editor is a rigging and model-editing tool that runs entirely in a web browser as a single page. Version 10 opens with nothing loaded — no model is built into the app. You open a glTF binary (.glb) file to start editing. A rigged GLB carries its own rig inside it: every part of the model carries the point it turns on and the part it hangs from, written into the file itself. Opening one shows the model in 3D with its joint points already placed, and builds a 2D paper-parts view for every view inside the file (front, back, side), with the points already on the parts. You check the points, drag them right if one is off, test the movement joint by joint, blacklist any angle a joint must never sit at, and save the rig — points, parents, limits, and blacklists — as one small file.
 
-Everything runs on your own computer. There is nothing to install and no account to make: download the Duke Joint Placer Version 5 HTML file and open it in a browser. The page does load the Three.js library from a public content delivery network, so it needs an internet connection the first time it opens.
+Everything runs on your own computer. There is nothing to install and no account to make: download the Model Editor Version 10 HTML file and open it in a browser. The page loads the Three.js library from a public content delivery network, so it needs an internet connection the first time it opens.
 
-## What it does
+## The included example model
 
-- Place Points mode: drag thirty labeled points — pelvis, spine, chest, neck, head, ears, shoulders, elbows, wrists, wing bases, wing bends, wing middle folds, wing tips, hips, knees, ankles, tail base, tail middle, and tail tip — onto the model. Every point is colored by body group and the panel says, in plain words, where each point goes.
-- Forward arrows: every point carries a solid arrow showing which way is forward for that point. Click a point and face its arrow with the snap buttons (Front, Back, Left, Right, Up, Down) or the yaw and pitch sliders. A large yellow arrow labeled FRONT stands on the floor at the model's front. Facings save with the points, ready for animation mapping later.
-- Wing bend and wing middle fold points: each wing is a four-point chain — base, bend, middle fold, tip — so wings can fold the way real wings do.
-- Custom points: add your own points, name them, hang them under any parent point, rename them, or delete them. Saved files load as complete rigs, so a rig you design can be shared as one small JSON file.
-- Movement limits: for every point, set an allow range (the whitelist — the degrees a joint may use) and deny bands (the blacklist — degrees it must never enter), per axis. Limits save with the points, per model, and are enforced while you test movement.
-- Test Movement mode: the rig is skinned to the model and rebuilt from your points every time you enter it. Bend any joint with the X, Y, and Z sliders, or play preset motions — Wave Right Arm, Tail Wag, Flap Wings, Head Turn, and Walk.
-- Edit Model mode: sculpt the model itself. Left click pushes the surface in, right click pulls it out, with brush size and strength controls. Paint mode colors the model with a palette brush — twelve ready colors plus any color you pick, with brush size and hardness controls; right click paints white to clear the tint. Save Edited Model writes your edited model out as a .glb file.
-- Load Model: bring your own .glb model, place the points on it, and test its movements in the same tool.
+The human man in this repository is a complete paper character: front, back, and side views standing side by side in one GLB file, 41 parts, every part cut from its own view's base picture and rigged with its points inside the file. Open the Model Editor, choose Load files, and pick Human_Man_Paper.GLB to see him, check his points, and test his movement.
 
 ## Files in this repository
 
-- Duke_Joint_Placer_V5.HTML — the complete tool as one self-contained page, with Duke embedded inside it. Open it in a browser and everything works.
-- Duke_3D.glb — Duke, the included model, as a standalone file, so you can also load him through Load Model or use him in other programs.
-- Joint_Points_3D_V1.JSON — the starting rig: Duke's thirty points with their forward facings, in the exact format the tool saves and loads.
+- Model_Editor_V10.HTML — the complete tool as one self-contained page, with no model inside it. Open it in a browser and open a GLB file to begin.
+- Model_Editor_V10_Spec_V1.TXT — exactly what changed in Version 10 and how the GLB rig format works.
+- Human_Man_Paper.GLB — the human man: front, back, and side paper layer sets in one rigged file.
+- GLB_To_PNG_V1.PY — a small program that takes a paper GLB file and saves every paper layer inside it as its own transparent PNG picture, so the layers can be opened and edited one by one in any other program.
+- Build_Human_GLB_V1.PY — the program that built Human_Man_Paper.GLB from the layer sets and their rig files.
+- Separate_Humanoid_V1.PY, Separate_Humanoid_Back_V1.PY, Separate_Humanoid_Side_V1.PY — the programs that cut the man's front, back, and side layer sets, each from its own base picture.
+- Rig_Points_Humanoid_V1.JSON, Rig_Points_Humanoid_Back_V1.JSON, Rig_Points_Humanoid_Side_V1.JSON, Rig_Points_Humanoid_Side_Back_V1.JSON — the man's rig files: every part's turning point and parent, per view. The same rig also rides inside the GLB itself.
+- Duke_3D.glb — Duke the dragon as a standalone 3D model file, kept from earlier work.
+- Joint_Points_3D_V1.JSON — a 3D joint-points file in the format the editor saves and loads, kept from earlier work.
 - README.md — this file.
 
 ## Asking for features
 
-Feature requests live in this repository's Issues, each written in plain language with the enhancement label. Paint, push and pull sculpting, the forward arrows, custom points, and the rest of the good stuff each have their own request there — add yours the same way.
-
-## Model Editor V6
-
-One editor that recognizes what you hand it:
-
-* **2D paper model — separated parts**: place each part's pin (Edit Points, drag, Set), turn parts with live degrees, set limits, and blacklist angles a joint must never sit at. Connections and labels ride with every point.
-* **2D paper model — one image to rig**: the two-stop flow. Stop 1, place the points on the picture. Stop 2, name each point and connect it to its parent. Save the rig data and the separated files get built from it. The bald eagle rig image is built in as the worked example; Paper Duke's separated parts are built in too.
-* **3D model — GLB**: Duke_3D.glb with his joint points; click a point, drag it in the view, fine-tune with the sliders, save the updated Joint Points file.
-
-Open `Model_Editor_V6.HTML` in a browser. The 3D mode loads `Duke_3D.glb` from the same folder.
-
-## Model Editor V7
-
-Everything in V6, plus what makes it friendly and what makes paper into a 3D model:
-
-* **Paper pages**: every page floats the same distance from the next — set the distance with one slider, reorder the pages in the list, and watch the stack turn in the live 3D preview. The **Finish** button downloads the full set at once: the rig data, the paper GLB built at your distance and page order, and a zip of every part file.
-* **Undo and redo** for everything, and an **auto-save** in the browser that offers itself back after a closed tab.
-* **Check My Rig**: plain-words flags — points connected to nothing, pins sitting outside their part's picture, a rest angle its own blacklist blocks.
-* **Faster placing**: click the picture to pick a part, zoom and pan, a magnifier while you drag, arrow keys nudge one pixel (Shift for ten), **Mirror to the other side**, and **Copy limits to twin**.
+Feature requests live in this repository's Issues, each written in plain language with the enhancement label.
