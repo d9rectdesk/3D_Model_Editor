@@ -14,14 +14,23 @@ OUT = Home
 PAGE_GAP = 0.03
 GROUP_X = {"Front": -2.3, "Back": 0.0, "Side": 2.3}
 
-# (view, parts folder, rig file, back folder, back name change)
+# (view, parts folder, rig file, back folder, back name change,
+#  back rig file, back-order name -> this view's part name)
+# The back pages stack by the BACK source's own layer order,
+# so each group also reads right from behind - a stack that
+# only follows the front order inverts from behind (Solomon's
+# catch, 2026-11-14: the neck sat in front of the face).
 VIEWS = [
     ("Front", "Parts_V1", "Rig_Points_Humanoid_V1.JSON",
-     "Parts_Back_V1", lambda n: n),
+     "Parts_Back_V1", lambda n: n,
+     "Rig_Points_Humanoid_Back_V1.JSON", lambda n: n),
     ("Back", "Parts_Back_V1", "Rig_Points_Humanoid_Back_V1.JSON",
-     "Parts_V1", lambda n: n),
+     "Parts_V1", lambda n: n,
+     "Rig_Points_Humanoid_V1.JSON", lambda n: n),
     ("Side", "Parts_Side_V1", "Rig_Points_Humanoid_Side_V1.JSON",
-     "Parts_Side_Back_V1", lambda n: n.replace("_V1", "_Side_Back_V1")),
+     "Parts_Side_Back_V1", lambda n: n.replace("_V1", "_Side_Back_V1"),
+     "Rig_Points_Humanoid_Side_Back_V1.JSON",
+     lambda n: n.replace("_Side_Back_V1", "_V1")),
 ]
 
 bin_parts, views, accessors, meshes, materials, images, nodes = [], [], [], [], [], [], []
@@ -74,9 +83,12 @@ def quad(name, png_path, z, ox, back=False, ds=False, extras=None):
     nodes.append(node)
 
 total_parts = 0
-for view_name, folder, rig_file, back_folder, back_name in VIEWS:
+for view_name, folder, rig_file, back_folder, back_name, back_rig_file, back_to_part in VIEWS:
     rig = json.load(open(os.path.join(Home, rig_file)))
     order = rig["layer_order_back_to_front"]
+    brig = json.load(open(os.path.join(Home, back_rig_file)))
+    back_z = {back_to_part(p): -0.0015 - j * PAGE_GAP
+              for j, p in enumerate(brig["layer_order_back_to_front"])}
     ox = GROUP_X[view_name]
     for i, part in enumerate(order):
         z = i * PAGE_GAP
@@ -89,7 +101,7 @@ for view_name, folder, rig_file, back_folder, back_name in VIEWS:
         quad(view_name + "_" + part, os.path.join(Home, folder, part + ".PNG"),
              z, ox, ds=not has_back, extras=extras)
         if has_back:
-            quad(view_name + "Back_" + part, back_png, z - 0.0015, ox, back=True)
+            quad(view_name + "Back_" + part, back_png, back_z[part], ox, back=True)
         total_parts += 1
 
 bin_data = b"".join(b for b, _ in bin_parts)
