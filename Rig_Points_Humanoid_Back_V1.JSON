@@ -1,0 +1,127 @@
+{
+ "canvas": 2048,
+ "layer_order_back_to_front": [
+  "Part_Foot_Left_V1",
+  "Part_Foot_Right_V1",
+  "Part_Shin_Left_V1",
+  "Part_Shin_Right_V1",
+  "Part_Thigh_Left_V1",
+  "Part_Thigh_Right_V1",
+  "Part_Neck_V1",
+  "Part_Head_V1",
+  "Part_Hand_Left_V1",
+  "Part_Hand_Right_V1",
+  "Part_Arm_Fore_Left_V1",
+  "Part_Arm_Fore_Right_V1",
+  "Part_Torso_V1",
+  "Part_Arm_Upper_Left_V1",
+  "Part_Arm_Upper_Right_V1"
+ ],
+ "parts": {
+  "Part_Torso_V1": {
+   "pin": [
+    1024.0,
+    998.0
+   ],
+   "parent": null
+  },
+  "Part_Neck_V1": {
+   "pin": [
+    1024.0,
+    422.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Head_V1": {
+   "pin": [
+    1024.0,
+    422.0
+   ],
+   "parent": "Part_Neck_V1"
+  },
+  "Part_Arm_Upper_Left_V1": {
+   "pin": [
+    1238.0,
+    532.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Arm_Upper_Right_V1": {
+   "pin": [
+    810.0,
+    532.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Arm_Fore_Left_V1": {
+   "pin": [
+    1287.0,
+    832.0
+   ],
+   "parent": "Part_Arm_Upper_Left_V1"
+  },
+  "Part_Arm_Fore_Right_V1": {
+   "pin": [
+    761.0,
+    832.0
+   ],
+   "parent": "Part_Arm_Upper_Right_V1"
+  },
+  "Part_Hand_Left_V1": {
+   "pin": [
+    1332.0,
+    998.0
+   ],
+   "parent": "Part_Arm_Fore_Left_V1"
+  },
+  "Part_Hand_Right_V1": {
+   "pin": [
+    716.0,
+    998.0
+   ],
+   "parent": "Part_Arm_Fore_Right_V1"
+  },
+  "Part_Thigh_Left_V1": {
+   "pin": [
+    1095.0,
+    1024.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Thigh_Right_V1": {
+   "pin": [
+    953.0,
+    1024.0
+   ],
+   "parent": "Part_Torso_V1"
+  },
+  "Part_Shin_Left_V1": {
+   "pin": [
+    1149.0,
+    1416.0
+   ],
+   "parent": "Part_Thigh_Left_V1"
+  },
+  "Part_Shin_Right_V1": {
+   "pin": [
+    899.0,
+    1416.0
+   ],
+   "parent": "Part_Thigh_Right_V1"
+  },
+  "Part_Foot_Left_V1": {
+   "pin": [
+    1180.0,
+    1782.0
+   ],
+   "parent": "Part_Shin_Left_V1"
+  },
+  "Part_Foot_Right_V1": {
+   "pin": [
+    868.0,
+    1782.0
+   ],
+   "parent": "Part_Shin_Right_V1"
+  }
+ }
+}
