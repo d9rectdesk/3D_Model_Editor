@@ -35,3 +35,12 @@ One editor that recognizes what you hand it:
 * **3D model — GLB**: Duke_3D.glb with his joint points; click a point, drag it in the view, fine-tune with the sliders, save the updated Joint Points file.
 
 Open `Model_Editor_V6.HTML` in a browser. The 3D mode loads `Duke_3D.glb` from the same folder.
+
+## Model Editor V7
+
+Everything in V6, plus what makes it friendly and what makes paper into a 3D model:
+
+* **Paper pages**: every page floats the same distance from the next — set the distance with one slider, reorder the pages in the list, and watch the stack turn in the live 3D preview. The **Finish** button downloads the full set at once: the rig data, the paper GLB built at your distance and page order, and a zip of every part file.
+* **Undo and redo** for everything, and an **auto-save** in the browser that offers itself back after a closed tab.
+* **Check My Rig**: plain-words flags — points connected to nothing, pins sitting outside their part's picture, a rest angle its own blacklist blocks.
+* **Faster placing**: click the picture to pick a part, zoom and pan, a magnifier while you drag, arrow keys nudge one pixel (Shift for ten), **Mirror to the other side**, and **Copy limits to twin**.
