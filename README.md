@@ -25,3 +25,13 @@ Everything runs on your own computer. There is nothing to install and no account
 ## Asking for features
 
 Feature requests live in this repository's Issues, each written in plain language with the enhancement label. Paint, push and pull sculpting, the forward arrows, custom points, and the rest of the good stuff each have their own request there — add yours the same way.
+
+## Model Editor V6
+
+One editor that recognizes what you hand it:
+
+* **2D paper model — separated parts**: place each part's pin (Edit Points, drag, Set), turn parts with live degrees, set limits, and blacklist angles a joint must never sit at. Connections and labels ride with every point.
+* **2D paper model — one image to rig**: the two-stop flow. Stop 1, place the points on the picture. Stop 2, name each point and connect it to its parent. Save the rig data and the separated files get built from it. The bald eagle rig image is built in as the worked example; Paper Duke's separated parts are built in too.
+* **3D model — GLB**: Duke_3D.glb with his joint points; click a point, drag it in the view, fine-tune with the sliders, save the updated Joint Points file.
+
+Open `Model_Editor_V6.HTML` in a browser. The 3D mode loads `Duke_3D.glb` from the same folder.
