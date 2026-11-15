@@ -1,0 +1,28 @@
+Model Editor V11 - what changed (2026-11-14, Solomon's notes)
+
+LAYERS ARE EDITABLE. In a 2D paper view, every row of the parts
+list has move-toward-front and move-toward-back buttons, and
+Save writes the new layer order into the rig file as
+layer_order_back_to_front. In the 3D view, a Layers panel lists
+every page of the loaded model front-first, grouped by the
+axis its stack runs on, with the same buttons - the pages swap
+depths live, so the neck can be moved behind the face by hand.
+
+PAPER RIG POINTS MOVE ON X AND Y ONLY. Points that come from a
+paper GLB (they ride inside the file) drag in the flat X/Y
+plane and their panel shows X and Y sliders only - no Z - so a
+paper rig stays flat and works properly with paper. Points of
+a true 3D model keep all three axes.
+
+THE MODEL LOADS IN THE CENTRE. When a GLB opens, the camera
+and the orbit target move to the model's own centre, at a
+distance that fits the whole model in the window.
+
+LIGHT MODE REACHES THE 3D STAGE. The background behind the
+model follows the app's appearance - light in light mode,
+dark in dark mode - for the model view and the paper stack
+preview alike.
+
+Everything from V10 stands: the editor opens empty, a rigged
+GLB carries its points inside it, support files live beside
+the app and never inside it.
