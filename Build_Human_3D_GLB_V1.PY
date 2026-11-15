@@ -1,17 +1,44 @@
 import json, os, struct
 
 # Build_Human_3D_GLB_V1.PY
-# The human man as ONE assembled figure in a single GLB
-# (Solomon's order, 2026-11-14): the front layers stacked in
-# their order at graded depths with the back layers behind
-# them, and the side layers standing on the profile plane with
-# their mirrored backs facing the other way - so he can be
-# orbited and seen from the front, the back, and both sides,
-# and every part node carries its rig pin and parent in extras
-# for the Model Editor. Built on Build_Human_GLB_V1.PY's proven
-# GLB writer. Duke.
+# The human man for the Model Editor's 3D view: his front,
+# back, and side standing side by side as three separate
+# groups - never overlapped into one figure (Solomon's
+# ruling, 2026-11-14: the views are edited separately, and
+# overlapping them made the model unusable). The build is
+# Build_Human_GLB_V1.PY's proven construction unchanged,
+# writing the 3D file instead of the paper file. Duke.
+# The human man as ONE paper GLB: his front, back, and side
+# standing side by side, every view cut from its own base image
+# (Solomon's ruling, 2026-11-14). Each part is two paper layers
+# back to back - the part on the front, its other-view namesake
+# on the back - and every part node carries its rig in extras:
+# the pin it turns on and the part it hangs from, so the Model
+# Editor reads the points from this file and nothing else.
+# Built on Build_Duke_GLB_V1.PY's proven GLB writer. Duke.
 Home = os.path.dirname(os.path.abspath(__file__))
 OUT = Home
+PAGE_GAP = 0.03
+GROUP_X = {"Front": -2.3, "Back": 0.0, "Side": 2.3}
+
+# (view, parts folder, rig file, back folder, back name change,
+#  back rig file, back-order name -> this view's part name)
+# The back pages stack by the BACK source's own layer order,
+# so each group also reads right from behind - a stack that
+# only follows the front order inverts from behind (Solomon's
+# catch, 2026-11-14: the neck sat in front of the face).
+VIEWS = [
+    ("Front", "Parts_V1", "Rig_Points_Humanoid_V1.JSON",
+     "Parts_Back_V1", lambda n: n,
+     "Rig_Points_Humanoid_Back_V1.JSON", lambda n: n),
+    ("Back", "Parts_Back_V1", "Rig_Points_Humanoid_Back_V1.JSON",
+     "Parts_V1", lambda n: n,
+     "Rig_Points_Humanoid_V1.JSON", lambda n: n),
+    ("Side", "Parts_Side_V1", "Rig_Points_Humanoid_Side_V1.JSON",
+     "Parts_Side_Back_V1", lambda n: n.replace("_V1", "_Side_Back_V1"),
+     "Rig_Points_Humanoid_Side_Back_V1.JSON",
+     lambda n: n.replace("_Side_Back_V1", "_V1")),
+]
 
 bin_parts, views, accessors, meshes, materials, images, nodes = [], [], [], [], [], [], []
 
@@ -23,7 +50,9 @@ def add_view(data, target=None):
     views.append(v)
     return len(views) - 1
 
-def add_mesh(name, png_path, pos, nor, uv, idx, lo, hi, extras=None, ds=False):
+def quad(name, png_path, z, ox, back=False, ds=False, extras=None):
+    # Textures ride at 1024: crisp on a two-unit model, a quarter
+    # of the bytes of the 2048 masters.
     import io
     from PIL import Image
     im = Image.open(png_path).convert("RGBA")
@@ -36,14 +65,21 @@ def add_mesh(name, png_path, pos, nor, uv, idx, lo, hi, extras=None, ds=False):
     materials.append({"name": name, "pbrMetallicRoughness":
                       {"baseColorTexture": {"index": ti}, "metallicFactor": 0.0, "roughnessFactor": 1.0},
                       "alphaMode": "MASK", "alphaCutoff": 0.35, "doubleSided": ds})
-    pv = add_view(struct.pack("<12f", *pos), 34962)
-    nv = add_view(struct.pack("<12f", *nor), 34962)
-    tv = add_view(struct.pack("<8f", *uv), 34962)
-    iv = add_view(struct.pack("<6H", *idx), 34963)
+    if not back:
+        pos = struct.pack("<12f", ox - 1, -1, z, ox + 1, -1, z, ox + 1, 1, z, ox - 1, 1, z)
+        nor = struct.pack("<12f", *([0, 0, 1] * 4))
+        uv = struct.pack("<8f", 0, 1, 1, 1, 1, 0, 0, 0)
+        idx = struct.pack("<6H", 0, 1, 2, 0, 2, 3)
+    else:
+        pos = struct.pack("<12f", ox + 1, 1, z, ox - 1, 1, z, ox - 1, -1, z, ox + 1, -1, z)
+        nor = struct.pack("<12f", *([0, 0, -1] * 4))
+        uv = struct.pack("<8f", 0, 0, 1, 0, 1, 1, 0, 1)
+        idx = struct.pack("<6H", 0, 2, 1, 0, 3, 2)
+    pv, nv, tv, iv = add_view(pos, 34962), add_view(nor, 34962), add_view(uv, 34962), add_view(idx, 34963)
     base = len(accessors)
     accessors.extend([
         {"bufferView": pv, "componentType": 5126, "count": 4, "type": "VEC3",
-         "min": lo, "max": hi},
+         "min": [ox - 1, -1, z], "max": [ox + 1, 1, z]},
         {"bufferView": nv, "componentType": 5126, "count": 4, "type": "VEC3"},
         {"bufferView": tv, "componentType": 5126, "count": 4, "type": "VEC2"},
         {"bufferView": iv, "componentType": 5123, "count": 6, "type": "SCALAR"}])
@@ -53,85 +89,37 @@ def add_mesh(name, png_path, pos, nor, uv, idx, lo, hi, extras=None, ds=False):
         node["extras"] = extras
     nodes.append(node)
 
-def front_quad(name, png, z, extras=None, ds=False):
-    pos = [-1, -1, z, 1, -1, z, 1, 1, z, -1, 1, z]
-    add_mesh(name, png, pos, [0, 0, 1] * 4, [0, 1, 1, 1, 1, 0, 0, 0],
-             [0, 1, 2, 0, 2, 3], [-1, -1, z], [1, 1, z], extras, ds)
-
-def back_quad(name, png, z):
-    pos = [1, 1, z, -1, 1, z, -1, -1, z, 1, -1, z]
-    add_mesh(name, png, pos, [0, 0, -1] * 4, [0, 0, 1, 0, 1, 1, 0, 1],
-             [0, 2, 1, 0, 3, 2], [-1, -1, z], [1, 1, z])
-
-def side_quad(name, png, x, extras=None, ds=False):
-    # Profile plane, toe toward +Z (the way the figure faces).
-    pos = [x, -1, 1, x, -1, -1, x, 1, -1, x, 1, 1]
-    add_mesh(name, png, pos, [1, 0, 0] * 4, [0, 1, 1, 1, 1, 0, 0, 0],
-             [0, 1, 2, 0, 2, 3], [x, -1, -1], [x, 1, 1], extras, ds)
-
-def side_back_quad(name, png, x):
-    pos = [x, 1, 1, x, 1, -1, x, -1, -1, x, -1, 1]
-    add_mesh(name, png, pos, [-1, 0, 0] * 4, [0, 0, 1, 0, 1, 1, 0, 1],
-             [0, 2, 1, 0, 3, 2], [x, -1, -1], [x, 1, 1])
-
-total = 0
-# The front figure: front layers in paint order at graded
-# depths, each with its true back layer behind it. The back
-# layers stack by the BACK view's own order, so the figure
-# reads right from behind too - a stack that only follows the
-# front order inverts from behind (Solomon's catch, 2026-11-14:
-# the neck sat in front of the face from behind).
-brig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_Back_V1.JSON")))
-back_index = {p: j for j, p in enumerate(brig["layer_order_back_to_front"])}
-rig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_V1.JSON")))
-order = rig["layer_order_back_to_front"]
-for i, part in enumerate(order):
-    z = (i - (len(order) - 1) / 2) * 0.004
-    info = rig["parts"][part]
-    extras = {"view": "Figure", "part": part,
-              "pin": info["pin"], "parent": info["parent"]}
-    back_png = os.path.join(Home, "Parts_Back_V1", part + ".PNG")
-    has_back = os.path.exists(back_png)
-    front_quad("Figure_" + part, os.path.join(Home, "Parts_V1", part + ".PNG"),
-               z, extras, ds=not has_back)
-    if has_back:
-        back_quad("FigureBack_" + part, back_png,
-                  -0.02 - back_index[part] * 0.004)
-    total += 1
-
-# The profile: side layers on the YZ plane, mirrored backs
-# facing the other way, so both sides read as the man.
-sbrig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_Side_Back_V1.JSON")))
-sback_index = {p.replace("_Side_Back_V1", "_V1"): j
-               for j, p in enumerate(sbrig["layer_order_back_to_front"])}
-srig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_Side_V1.JSON")))
-sorder = srig["layer_order_back_to_front"]
-for i, part in enumerate(sorder):
-    x = 0.002 + i * 0.0012
-    info = srig["parts"][part]
-    extras = {"view": "FigureSide", "part": part,
-              "pin": info["pin"], "parent": info["parent"]}
-    back_png = os.path.join(Home, "Parts_Side_Back_V1",
-                            part.replace("_V1", "_Side_Back_V1") + ".PNG")
-    has_back = os.path.exists(back_png)
-    side_quad("FigureSide_" + part,
-              os.path.join(Home, "Parts_Side_V1", part + ".PNG"),
-              x, extras, ds=not has_back)
-    if has_back:
-        side_back_quad("FigureSideBack_" + part, back_png,
-                       -(0.002 + sback_index[part] * 0.0012))
-    total += 1
+total_parts = 0
+for view_name, folder, rig_file, back_folder, back_name, back_rig_file, back_to_part in VIEWS:
+    rig = json.load(open(os.path.join(Home, rig_file)))
+    order = rig["layer_order_back_to_front"]
+    brig = json.load(open(os.path.join(Home, back_rig_file)))
+    back_z = {back_to_part(p): -0.0015 - j * PAGE_GAP
+              for j, p in enumerate(brig["layer_order_back_to_front"])}
+    ox = GROUP_X[view_name]
+    for i, part in enumerate(order):
+        z = i * PAGE_GAP
+        info = rig["parts"][part]
+        extras = {"view": view_name, "part": part,
+                  "pin": info["pin"], "parent": info["parent"]}
+        back_png = os.path.join(Home, back_folder, back_name(part) + ".PNG")
+        has_back = os.path.exists(back_png)
+        # No back picture: the page shows its front from behind.
+        quad(view_name + "_" + part, os.path.join(Home, folder, part + ".PNG"),
+             z, ox, ds=not has_back, extras=extras)
+        if has_back:
+            quad(view_name + "Back_" + part, back_png, back_z[part], ox, back=True)
+        total_parts += 1
 
 bin_data = b"".join(b for b, _ in bin_parts)
-gltf = {"asset": {"version": "2.0", "generator": "Duke Human 3D GLB Builder V1"},
+gltf = {"asset": {"version": "2.0", "generator": "Duke Human GLB Builder V1"},
         "scene": 0, "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes,
         "meshes": meshes, "materials": materials, "images": images,
         "textures": [{"source": i} for i in range(len(images))],
         "accessors": accessors, "bufferViews": views,
         "buffers": [{"byteLength": len(bin_data)}],
         "extras": {"character": "Human_Man", "canvas": 2048,
-                   "views": ["Figure", "FigureSide"],
-                   "build": "one assembled figure: front layers in order at graded depths with true backs behind, side layers on the profile plane with mirrored backs",
+                   "views": ["Front", "Back", "Side"],
                    "rig": "each part node carries extras.pin (canvas pixels) and extras.parent"}}
 json_data = json.dumps(gltf).encode()
 json_data += b" " * ((-len(json_data)) % 4)
@@ -141,4 +129,4 @@ glb = (b"glTF" + struct.pack("<II", 2, 12 + 8 + len(json_data) + 8 + len(bin_dat
 path = os.path.join(OUT, "Human_Man_3D.GLB")
 open(path, "wb").write(glb)
 print(f"Human_Man_3D.GLB written: {path} {len(glb)} bytes, "
-      f"{total} parts, {len(meshes)} layers ({len(images)} pictures)")
+      f"{total_parts} parts, {len(meshes)} layers ({len(images)} pictures)")
