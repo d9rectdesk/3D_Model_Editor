@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Editor V11 — DirectDesk</title>
+<style>
+  :root {
+    --bg: #edf1f4; --bar: #ffffff; --panel: #ffffff;
+    --field: #ffffff; --field-border: #bfcbd4;
+    --text: #1d2833; --muted: #5d7282; --head: #00707e;
+    --hover: #edf6f8; --sel: #d3edf2; --line: #d3dde3;
+    --save-bg: #f2f7f3; --save-text: #1e6b30;
+    --stage: radial-gradient(circle at 50% 42%, #ffffff 0%, #dde6ec 78%);
+    --accent: #0097a7;
+  }
+  html[data-theme="dark"] {
+    --bg: #14181d; --bar: #1b2129; --panel: #1b2129;
+    --field: #232b35; --field-border: #3a4654;
+    --text: #e8edf2; --muted: #9fb2c3; --head: #7fd4de;
+    --hover: #232b35; --sel: #0d3a40; --line: #2c3540;
+    --save-bg: #10141a; --save-text: #9fe8a9;
+    --stage: radial-gradient(circle at 50% 42%, #232a33 0%, #14181d 75%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  #menubar { display: flex; align-items: center; gap: 2px; background: var(--bar); border-bottom: 1px solid var(--line); padding: 4px 10px; z-index: 200; position: relative; }
+  #menubar .appName { font-weight: 700; font-size: 13px; margin-right: 12px; color: var(--head); }
+  .menu { position: relative; }
+  .menu > button { background: none; border: 1px solid transparent; font-weight: 600; font-size: 13px; color: var(--text); padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+  .menu.open > button, .menu > button:hover { background: var(--hover); border-color: var(--line); }
+  .menuDrop { display: none; position: absolute; left: 0; top: 100%; min-width: 230px; background: var(--bar); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(15, 30, 40, .22); padding: 6px; z-index: 300; }
+  .menu.open .menuDrop { display: block; }
+  .menuDrop button { display: flex; width: 100%; text-align: left; background: none; border: none; color: var(--text); font-size: 13px; font-weight: 500; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+  .menuDrop button:hover { background: var(--hover); }
+  .menuDrop button:disabled { opacity: .45; cursor: default; }
+  .menuDrop hr { border: none; border-top: 1px solid var(--line); margin: 5px 4px; }
+  .menuDrop .tick { margin-left: auto; color: var(--accent); font-weight: 700; }
+  #workrow { flex: 1; display: flex; min-height: 0; }
+  #left { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar { padding: 10px 14px; background: var(--bar); border-bottom: 2px solid var(--accent); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #topbar h1 { font-size: 17px; margin-right: 6px; }
+  .badge { background: var(--accent); color: #fff; border-radius: 10px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+  .badge.warn { background: #b3541e; }
+  select, button, input[type=text], input[type=number] { background: var(--field); color: var(--text); border: 1px solid var(--field-border); border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+  button { cursor: pointer; font-weight: 600; }
+  button:hover { border-color: var(--accent); }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { background: #7a2020; }
+  #stageWrap { flex: 1; position: relative; overflow: hidden; background: var(--stage); }
+  #stage { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; }
+  #wires { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .wrap { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .wrap img.part { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  .dot { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: #37e05a; border: 3px solid #0c3816; transform: translate(-50%, -50%); cursor: grab; z-index: 50; display: none; }
+  .dot.sel { background: #ffd23e; border-color: #5a4300; }
+  .tag { position: absolute; transform: translate(-50%, -190%); background: rgba(10,14,18,.85); color: #bfefff; font-size: 26px; padding: 2px 12px; border-radius: 8px; pointer-events: none; display: none; white-space: nowrap; z-index: 49; }
+  #statusbar { display: flex; gap: 14px; align-items: center; background: var(--bar); border-top: 1px solid var(--line); padding: 5px 14px; font-size: 12px; color: var(--muted); min-height: 26px; }
+  #statusbar b { color: var(--text); font-weight: 600; }
+  #statusbar .last { margin-left: auto; color: var(--head); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #panel { width: 348px; background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 12px; }
+  #panel h2 { font-size: 14px; color: var(--head); margin: 12px 0 6px; }
+  #panel h2:first-child { margin-top: 0; }
+  .sect > h2 { cursor: pointer; user-select: none; }
+  .sect > h2::before { content: "\25BE  "; color: var(--muted); font-size: 11px; }
+  .sect.closed > h2::before { content: "\25B8  "; }
+  .sect.closed > *:not(h2) { display: none !important; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .row label { flex: 0 0 86px; font-size: 12px; color: var(--muted); }
+  .row input[type=range] { flex: 1; }
+  .deg { flex: 0 0 74px; text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700; }
+  .deg.blocked { color: #ff5f56; }
+  .partRow { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 6px; cursor: pointer; }
+  .partRow:hover { background: var(--hover); }
+  .partRow.sel { background: var(--sel); }
+  .partRow .nm { flex: 0 0 118px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .partRow input[type=range] { flex: 1; }
+  .partRow .deg { flex-basis: 62px; font-size: 12px; }
+  .chip { display: inline-block; background: #7a2020; color: #ffd9d6; border-radius: 10px; padding: 1px 8px; font-size: 11px; margin: 2px 2px 0 0; cursor: pointer; }
+  #saveBox { width: 100%; height: 130px; background: var(--save-bg); color: var(--save-text); border: 1px solid var(--line); border-radius: 6px; font-size: 10px; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  #status { font-size: 12px; color: #b8860b; min-height: 16px; margin-top: 4px; }
+  html[data-theme="dark"] #status { color: #ffd23e; }
+  #gl3d { position: absolute; inset: 0; display: none; }
+  .small { font-size: 11px; color: var(--muted); }
+  .pageRow { display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 6px; }
+  .pageRow:hover { background: var(--hover); }
+  .pageRow .nm { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pageRow button { padding: 2px 8px; font-size: 12px; }
+  .pageRow .zpos { flex: 0 0 52px; text-align: right; font-size: 11px; color: var(--head); font-variant-numeric: tabular-nums; }
+  #stackPrev { width: 100%; height: 210px; background: var(--save-bg); border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; overflow: hidden; }
+  #stackPrev canvas { width: 100%; height: 100%; display: block; }
+  #mag { position: absolute; width: 168px; height: 168px; border-radius: 50%; border: 3px solid #37e05a; overflow: hidden; display: none; pointer-events: none; z-index: 80; background: #10141a; }
+  #mag canvas { width: 100%; height: 100%; }
+  #checkOut div { margin: 2px 0; }
+  #checkOut .bad { color: #d43a31; }
+  #checkOut .good { color: #2e9e4f; }
+  html[data-theme="dark"] #checkOut .bad { color: #ff9d97; }
+  html[data-theme="dark"] #checkOut .good { color: #9fe8a9; }
+  body.compact #panel { padding: 8px; }
+  body.compact .row { margin: 2px 0; }
+  body.compact .partRow, body.compact .pageRow { padding: 1px 4px; }
+  body.compact #panel h2 { margin: 8px 0 4px; }
+</style>
+<script>try { var t9 = localStorage.getItem("ME11_theme"); if (t9) document.documentElement.dataset.theme = t9; } catch (e) {}</script>
+</head>
+<body>
+<div id="menubar">
+  <span class="appName">Model Editor V11</span>
+  <div class="menu"><button type="button">File</button><div class="menuDrop">
+    <button data-act="loadBtn">Load files…</button>
+    <button data-act="loadLayerBtn">Load Layer</button>
+    <hr>
+    <button data-act="saveBtn">Save rig points</button>
+    <button data-act="finishBtn">Finish — full set</button>
+  </div></div>
+  <div class="menu"><button type="button">Edit</button><div class="menuDrop">
+    <button data-act="undoBtn">Undo</button>
+    <button data-act="redoBtn">Redo</button>
+    <hr>
+    <button data-act="editBtn">Edit Points</button>
+    <button data-act="setBtn">Set</button>
+    <button data-act="resetPoseBtn">Reset Pose</button>
+  </div></div>
+  <div class="menu"><button type="button">View</button><div class="menuDrop">
+    <button data-act="expandAll">Expand all sections</button>
+    <button data-act="collapseAll">Collapse all sections</button>
+    <hr>
+    <button data-act="themeLight">Appearance: Light<span class="tick" id="tickLight"></span></button>
+    <button data-act="themeDark">Appearance: Dark<span class="tick" id="tickDark"></span></button>
+  </div></div>
+  <div class="menu"><button type="button">Character</button><div class="menuDrop">
+    <button id="menuOpenGlb">Open a GLB file…</button>
+  </div></div>
+  <div class="menu"><button type="button">Tools</button><div class="menuDrop">
+    <button data-act="checkBtn">Check My Rig</button>
+    <hr>
+    <button data-pose="wave">Test: Wave</button>
+    <button data-pose="nod">Test: Nod</button>
+    <button data-pose="idle">Test: Idle</button>
+    <button data-pose="stop">Test: Stop</button>
+  </div></div>
+  <div class="menu"><button type="button">Help</button><div class="menuDrop">
+    <button data-act="howTo">How this works</button>
+  </div></div>
+</div>
+<div id="workrow">
+<div id="left">
+  <div id="topbar">
+    <h1>Model Editor V11</h1>
+    <span class="badge" id="kindBadge">2D paper model</span>
+    <select id="modelPick">
+      <option value="none">Open a GLB file to start…</option>
+    </select>
+    <select id="facePick" title="Facing"><option value="front">Front</option><option value="back">Back</option></select>
+    <button id="loadBtn">Load files…</button>
+    <button id="loadLayerBtn">Load Layer</button>
+    <input type="file" id="layerPick" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" style="display:none">
+    <button id="undoBtn">⟲ Undo</button>
+    <button id="redoBtn">⟳ Redo</button>
+    <input type="file" id="filePick" multiple style="display:none">
+    <span class="small" id="modelInfo"></span>
+  </div>
+  <div id="stageWrap">
+    <div id="emptyHint" style="margin:18px;padding:26px;border:2px dashed #0097a7;border-radius:10px;text-align:center;font-size:16px;line-height:1.5">No model loaded yet.<br>Open a GLB file to start editing — a rigged GLB carries its points inside it.</div>
+    <div id="stage">
+      <svg id="wires"></svg>
+      <div id="rigRoot" class="wrap"></div>
+      <img id="soloImg" class="part" style="position:absolute;left:0;top:0;width:100%;height:100%;display:none">
+      <div id="extraLayers" style="position:absolute;left:0;top:0;width:100%;height:100%"></div>
+      <div id="soloDots" style="position:absolute;left:0;top:0;width:100%;height:100%"></div>
+    </div>
+    <div id="gl3d"></div>
+    <div id="mag"></div>
+  </div>
+  <div id="statusbar"></div>
+</div>
+<div id="panel">
+  <h2>How this works</h2>
+  <p class="hint" id="howText"></p>
+  <div class="row"><button id="editBtn">Edit Points</button><button id="setBtn" disabled>Set</button>
+  <button id="resetPoseBtn">Reset Pose</button></div>
+  <div id="status"></div>
+  <h2 id="listTitle">Parts</h2>
+  <div id="partList"></div>
+  <h2>Selected</h2>
+  <div class="row"><label>Label</label><input type="text" id="fLabel" style="flex:1"></div>
+  <div class="row"><label>Connected to</label><select id="fParent" style="flex:1"></select></div>
+  <div class="row"><label>Pin X / Y</label><input type="number" id="fPinX" style="width:76px"><input type="number" id="fPinY" style="width:76px"></div>
+  <div class="row"><label>Angle</label><input type="range" id="fAngle" min="-180" max="180" step="1" value="0"><span class="deg" id="fDeg">0°</span></div>
+  <div class="row"><label>Limits</label><input type="number" id="fMin" style="width:64px" value="-180"><span>to</span><input type="number" id="fMax" style="width:64px" value="180"></div>
+  <div class="row"><button id="blackBtn">Blacklist this angle</button></div>
+  <div class="row"><label>Blacklisted</label><span id="blackList"></span></div>
+  <div class="row"><button id="mirrorBtn">Mirror to the other side</button><button id="copyTwinBtn">Copy limits to twin</button></div>
+  <div class="row"><button id="checkBtn">Check My Rig</button></div>
+  <div id="checkOut" class="hint"></div>
+  <div id="pagesSection">
+  <h2>Paper pages — the 3D stack</h2>
+  <div class="row"><label>Page distance</label><input type="range" id="pageDist" min="0" max="0.12" step="0.002" value="0.03"><span class="deg" id="pageDistVal">0.030</span></div>
+  <div id="stackPrev"></div>
+  <div id="pageList"></div>
+  <p class="hint">Every page floats the same distance from the next, so turning the model shows which page is in front. Move pages up or down to change the stack. The paper GLB and the Finish set use this order and distance.</p>
+  </div>
+  <div id="layersSection" style="display:none">
+  <h2>Loaded layers</h2>
+  <div id="extraLayerList"></div>
+  <p class="hint">Layers loaded onto a single image stack on top of it, in the order they were loaded. The rig points belong to the base image. Save and Finish include every loaded layer as its own page.</p>
+  </div>
+  <h2>Test movement</h2>
+  <div class="row"><button data-pose="wave">Wave</button><button data-pose="nod">Nod</button><button data-pose="idle">Idle</button><button data-pose="stop">Stop</button></div>
+  <h2>Save the rig data</h2>
+  <div class="row"><button id="saveBtn">Save rig points</button><button id="finishBtn" class="on">Finish — full set</button></div>
+  <textarea id="saveBox" readonly></textarea>
+  <p class="hint">The saved file holds every point: its label, its pin, what it connects to, its limits, and its blacklisted angles. Give that file back and the model gets built from it.</p>
+  <h2>Settings</h2>
+  <div class="row"><label>Appearance</label><select id="themePick" style="flex:1"><option value="light">Light</option><option value="dark">Dark</option></select></div>
+  <div class="row"><label>Spacing</label><select id="densityPick" style="flex:1"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+  <p class="hint">Light is the default. Your choices are remembered on this machine.</p>
+</div>
+</div>
+<script>
+"use strict";
+/* Model Editor V11 — no built-in models. The editor opens empty;
+   the user opens a GLB file to start editing. A rigged GLB
+   carries its points inside it (each part node's extras: pin
+   and parent), and opening one fills the 3D joint points from
+   those extras and builds every view's 2D paper parts from the
+   GLB's own layers — ready to test movement and to save the
+   blacklisted ranges. Loose PNG parts and rig files still load
+   the way they always did. */
+const DUKE_PARTS = {};
+const DUKE_BACKS = {};
+const DUKE_RIG = {};
+const KEVIN_IMG = "";
+const KEVIN_POINTS = [];
+const SIDE_IMG = "";
+const SIDE_POINTS = [];
+const POINTS3D = {"points":[]};
+const PAPER_GLB = "";
+const EAGLE_GLB = "";
+const $ = id => document.getElementById(id);
+const stage = $("stage"), rigRoot = $("rigRoot"), wires = $("wires");
+let MODE = "parts";           // parts | image | 3d
+let CANVAS = 2048, SCALE = 1;
+let items = {};               // id -> item (part or point)
+let order = [];               // paint order back to front (parts mode)
+let selected = null, editing = false, idleTimer = null;
+let stackOrder = [], pageDist = 0.03, CUR_IMAGES = {}, CUR_BACKS = {}, alphaMasks = {};
+let extraLayers = [];   // image mode: loaded layers stacked over the solo image
+let soloBase = null;    // image mode: { id, label, src, fileName } — the base page
+let loadedLayerIds = new Set();  // parts mode: ids that came from Load Layer
+let viewZoom = 1, panX = 0, panY = 0;
+
+/* ---------------- undo, redo, autosave ---------------- */
+let undoStack = [], redoStack = [], restoring = false, lastSnap = null;
+function snapState() {
+  const data = { mode: MODE, stackOrder: [...stackOrder], pageDist,
+    items: order.map(id => { const it = items[id];
+      return { id, label: it.label, pin: [it.pin.x, it.pin.y], parent: it.parent,
+               angle: it.angle, min: it.min, max: it.max, blacklist: JSON.parse(JSON.stringify(it.blacklist)) }; }) };
+  return JSON.stringify(data);
+}
+function commit() {
+  if (restoring || lastSnap === null) return;
+  undoStack.push(lastSnap); if (undoStack.length > 60) undoStack.shift();
+  redoStack = []; lastSnap = snapState();
+  clearTimeout(commit._t);
+  commit._t = setTimeout(() => { try {
+    localStorage.setItem("ME11_autosave", JSON.stringify({ when: Date.now(), model: $("modelPick").value, state: lastSnap }));
+  } catch (e) { /* storage full or blocked — autosave is a courtesy, not a promise */ } }, 400);
+}
+function applySnap(json) {
+  const data = JSON.parse(json); restoring = true;
+  stackOrder = data.stackOrder || [...order]; pageDist = data.pageDist ?? 0.03;
+  $("pageDist").value = pageDist; $("pageDistVal").textContent = (+pageDist).toFixed(3);
+  /* Undo/redo of a layer add or remove: drop items the snapshot does
+     not have, and resurrect a loaded layer the snapshot does have. The
+     part's image stays in CUR_IMAGES, so a removed layer can come back. */
+  const snapIds = new Set(data.items.map(s => s.id));
+  for (const id of [...order]) {
+    if (snapIds.has(id)) continue;
+    const it = items[id];
+    if (it) {
+      if (it.el) it.el.remove();
+      if (MODE === "image") { if (it.dot) it.dot.remove(); if (it.tag) it.tag.remove(); }
+      delete items[id];
+    }
+    order = order.filter(o => o !== id);
+    if (selected && selected.id === id) selected = null;
+  }
+  for (const s of data.items) {
+    if (items[s.id]) continue;
+    if (MODE === "parts" && loadedLayerIds.has(s.id) && CUR_IMAGES[s.id]) {
+      const it = mkItem(s.id, s.label, s.pin, s.parent);
+      it.min = s.min; it.max = s.max; it.blacklist = JSON.parse(JSON.stringify(s.blacklist));
+      items[s.id] = it; order.push(s.id); attachLayerDom(it, CUR_IMAGES[s.id]);
+    } else if (MODE === "image") {
+      const it = mkItem(s.id, s.label, s.pin, s.parent);
+      it.min = s.min; it.max = s.max; it.blacklist = JSON.parse(JSON.stringify(s.blacklist));
+      items[s.id] = it; order.push(s.id);
+      const dot = document.createElement("div"); dot.className = "dot";
+      dot.style.left = it.pin.x + "px"; dot.style.top = it.pin.y + "px"; dot.style.display = editing ? "block" : "none";
+      const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = it.label;
+      tag.style.left = it.pin.x + "px"; tag.style.top = it.pin.y + "px"; tag.style.display = editing ? "block" : "none";
+      $("soloDots").append(dot, tag); it.dot = dot; it.tag = tag;
+      dot.addEventListener("pointerdown", e2 => startDrag(e2, it));
+    }
+  }
+  order = data.items.map(s => s.id).filter(id => items[id]);
+  for (const s of data.items) {
+    const it = items[s.id]; if (!it) continue;
+    it.label = s.label; it.parent = s.parent; it.min = s.min; it.max = s.max; it.blacklist = s.blacklist;
+    movePin(it, s.pin[0], s.pin[1]); setAngle(it, s.angle);
+    if (it.tag) it.tag.textContent = s.label;
+  }
+  buildList(); renderPages(); refreshStack();
+  if (selected) select(selected);
+  restoring = false;
+}
+$("undoBtn").addEventListener("click", () => {
+  if (!undoStack.length) { status("Nothing to undo."); return; }
+  redoStack.push(lastSnap); lastSnap = undoStack.pop(); applySnap(lastSnap); status("Undone.");
+});
+$("redoBtn").addEventListener("click", () => {
+  if (!redoStack.length) { status("Nothing to redo."); return; }
+  undoStack.push(lastSnap); lastSnap = redoStack.pop(); applySnap(lastSnap); status("Redone.");
+});
+window.addEventListener("keydown", ev => {
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "z") { ev.preventDefault(); ev.shiftKey ? $("redoBtn").click() : $("undoBtn").click(); }
+});
+function offerAutosave() {
+  try {
+    const raw = localStorage.getItem("ME11_autosave"); if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved.model !== $("modelPick").value) return;
+    const when = new Date(saved.when).toLocaleTimeString();
+    status(`Auto-save from ${when} found. `);
+    const b = document.createElement("button"); b.textContent = "Restore auto-save";
+    b.addEventListener("click", () => { applySnap(saved.state); status("Auto-save restored."); });
+    $("status").appendChild(b);
+  } catch (e) { /* no autosave — nothing to offer */ }
+}
+
+function status(msg) { $("status").textContent = msg; }
+function fit() {
+  const w = $("stageWrap").clientWidth, h = $("stageWrap").clientHeight;
+  SCALE = Math.min(w, h) / CANVAS * 0.98;
+  stage.style.width = CANVAS + "px"; stage.style.height = CANVAS + "px";
+  applyView();
+  wires.setAttribute("viewBox", `0 0 ${CANVAS} ${CANVAS}`);
+  wires.style.width = CANVAS + "px"; wires.style.height = CANVAS + "px";
+}
+function applyView() {
+  stage.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${SCALE * viewZoom})`;
+}
+$("stageWrap").addEventListener("wheel", ev => {
+  if (MODE === "3d") return;
+  ev.preventDefault();
+  viewZoom = Math.max(0.5, Math.min(4, viewZoom * (ev.deltaY < 0 ? 1.12 : 0.89)));
+  applyView();
+}, { passive: false });
+$("stageWrap").addEventListener("pointerdown", ev => {
+  if (ev.target !== $("stageWrap") && ev.target !== stage) return;
+  const sx = ev.clientX, sy = ev.clientY, ox = panX, oy = panY;
+  const move = e2 => { panX = ox + e2.clientX - sx; panY = oy + e2.clientY - sy; applyView(); };
+  const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+  window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+});
+window.addEventListener("resize", fit);
+
+/* ---------------- shared rig item logic ---------------- */
+function mkItem(id, label, pin, parent) {
+  return { id, label, pin: { x: pin[0], y: pin[1] }, parent: parent || null,
+           angle: 0, min: -180, max: 180, blacklist: [], el: null, dot: null, tag: null };
+}
+function worldPin(it) {
+  let p = { x: it.pin.x, y: it.pin.y }, chain = [];
+  let cur = it.parent ? items[it.parent] : null;
+  while (cur) { chain.push(cur); cur = cur.parent ? items[cur.parent] : null; }
+  for (const a of chain) {
+    const r = a.angle * Math.PI / 180, dx = p.x - a.pin.x, dy = p.y - a.pin.y;
+    p = { x: a.pin.x + dx * Math.cos(r) - dy * Math.sin(r), y: a.pin.y + dx * Math.sin(r) + dy * Math.cos(r) };
+  }
+  return p;
+}
+function drawWires() {
+  let s = "";
+  for (const id of Object.keys(items)) {
+    const it = items[id];
+    if (!it.parent || !items[it.parent]) continue;
+    const a = worldPin(items[it.parent]), b = worldPin(it);
+    s += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#37e05a" stroke-width="5" opacity="0.75"/>`;
+  }
+  wires.innerHTML = s;
+}
+function blockedAt(it, deg) {
+  return it.blacklist.find(b => deg >= b.center - b.width && deg <= b.center + b.width) || null;
+}
+function setAngle(it, deg, fromSlider) {
+  deg = Math.max(it.min, Math.min(it.max, Math.round(deg)));
+  const hit = blockedAt(it, deg);
+  if (hit) {
+    deg = deg < hit.center ? hit.center - hit.width - 1 : hit.center + hit.width + 1;
+    deg = Math.max(it.min, Math.min(it.max, deg));
+    flashBlocked(it);
+  }
+  it.angle = deg;
+  if (it.el) it.el.style.transform = `rotate(${deg}deg)`;
+  syncRow(it); drawWires();
+}
+function flashBlocked(it) {
+  status(`BLACKLISTED — ${it.label} may not sit at that angle.`);
+  const d = document.querySelector(`#row_${CSS.escape(it.id)} .deg`);
+  if (d) { d.classList.add("blocked"); setTimeout(() => d.classList.remove("blocked"), 700); }
+  if (selected === it) $("fDeg").classList.add("blocked"),
+    setTimeout(() => $("fDeg").classList.remove("blocked"), 700);
+}
+
+/* ---------------- parts mode ---------------- */
+function clearStage() {
+  stopIdle(); items = {}; order = []; selected = null;
+  extraLayers = []; soloBase = null; loadedLayerIds = new Set();
+  $("extraLayers").innerHTML = ""; $("layersSection").style.display = "none";
+  rigRoot.innerHTML = ""; $("soloDots").innerHTML = "";
+  $("soloImg").style.display = "none"; rigRoot.style.display = "none";
+  $("gl3d").style.display = "none"; stage.style.display = "block";
+  $("partList").innerHTML = ""; wires.innerHTML = "";
+}
+function buildParts(def) {
+  clearStage(); MODE = "parts";
+  const eh = $("emptyHint"); if (eh) eh.style.display = "none"; CANVAS = def.canvas || 2048;
+  CUR_IMAGES = def.images; CUR_BACKS = def.backs || {};
+  stackOrder = [...def.order]; alphaMasks = {}; computeMasks(def.images); makeRestCanvas();
+  $("pagesSection").style.display = "block";
+  rigRoot.style.display = "block";
+  $("kindBadge").textContent = "2D paper model — separated parts";
+  $("kindBadge").className = "badge";
+  $("listTitle").textContent = "Parts";
+  $("howText").textContent = "This model is separated paper parts. Edit Points, drag the green dots to place each part's pin, then Set. Pick a part to turn it — the degrees show live. Blacklist any angle a joint must never sit at.";
+  const slots = {};
+  for (const id of def.order) {
+    const it = mkItem(id, def.labels[id] || id, def.pins[id], def.parents[id]);
+    it.min = def.limits?.[id]?.[0] ?? -180; it.max = def.limits?.[id]?.[1] ?? 180;
+    items[id] = it; order.push(id);
+    const wrap = document.createElement("div");
+    wrap.className = "wrap"; wrap.id = "wrap_" + id;
+    wrap.style.transformOrigin = `${it.pin.x}px ${it.pin.y}px`;
+    const behind = document.createElement("div"); behind.className = "wrap";
+    const img = document.createElement("img"); img.className = "part"; img.src = def.images[id]; img.alt = id;
+    const front = document.createElement("div"); front.className = "wrap";
+    const dot = document.createElement("div"); dot.className = "dot";
+    dot.style.left = it.pin.x + "px"; dot.style.top = it.pin.y + "px";
+    const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = it.label;
+    tag.style.left = it.pin.x + "px"; tag.style.top = it.pin.y + "px";
+    wrap.append(behind, img, front, dot, tag);
+    it.el = wrap; it.dot = dot; it.tag = tag;
+    slots[id] = { behind, front };
+    dot.addEventListener("pointerdown", ev => startDrag(ev, it));
+  }
+  for (const id of def.order) {
+    const it = items[id];
+    if (!it.parent) rigRoot.appendChild(it.el);
+    else slots[it.parent][def.behind.includes(id) ? "behind" : "front"].appendChild(it.el);
+  }
+  buildList(); fit(); drawWires(); renderPages(); refreshStack(); applyFacing();
+  undoStack = []; redoStack = []; lastSnap = snapState(); offerAutosave();
+}
+
+/* ---------------- image mode (place, connect, label) ---------------- */
+function buildImage(imgSrc, pointsDef, name) {
+  clearStage(); MODE = "image"; CANVAS = 2048;
+  CUR_IMAGES = {}; CUR_BACKS = {}; stackOrder = []; alphaMasks = {}; makeRestCanvas(imgSrc);
+  soloBase = { id: layerIdFromName(name || "Base", false), label: labelFromName(name || "Base"),
+               src: imgSrc, fileName: name || "" };
+  $("pagesSection").style.display = "none";
+  const solo = $("soloImg"); solo.src = imgSrc; solo.style.display = "block";
+  $("kindBadge").textContent = "2D paper model — one image to rig";
+  $("kindBadge").className = "badge";
+  $("listTitle").textContent = "Rig points";
+  $("howText").textContent = "Stop 1: place the points — Edit Points, drag them onto the joints, Set. Stop 2: pick a point, name it, and connect it to its parent. Save the rig data and hand it back; the separated files get built from it.";
+  for (const p of pointsDef) {
+    const it = mkItem(p.id, p.label, p.pin, p.parent);
+    items[p.id] = it; order.push(p.id);
+    const dot = document.createElement("div"); dot.className = "dot";
+    dot.style.left = it.pin.x + "px"; dot.style.top = it.pin.y + "px";
+    const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = it.label;
+    tag.style.left = it.pin.x + "px"; tag.style.top = it.pin.y + "px";
+    $("soloDots").append(dot, tag);
+    it.dot = dot; it.tag = tag;
+    dot.addEventListener("pointerdown", ev => startDrag(ev, it));
+  }
+  buildList(); fit(); drawWires();
+  undoStack = []; redoStack = []; lastSnap = snapState(); offerAutosave();
+}
+
+/* ---------------- masks, magnifier, pages, twins, checks ---------------- */
+function computeMasks(images) {
+  for (const id of Object.keys(images)) {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = 256; c.height = 256;
+      const x = c.getContext("2d"); x.drawImage(img, 0, 0, 256, 256);
+      alphaMasks[id] = x.getImageData(0, 0, 256, 256).data;
+    };
+    img.src = images[id];
+  }
+}
+let restCanvas = null;
+function makeRestCanvas(soloSrc) {
+  restCanvas = document.createElement("canvas"); restCanvas.width = 512; restCanvas.height = 512;
+  const x = restCanvas.getContext("2d");
+  const draw = src => new Promise(res => { const i = new Image(); i.onload = () => { x.drawImage(i, 0, 0, 512, 512); res(); }; i.src = src; });
+  (async () => { if (soloSrc) await draw(soloSrc); else for (const id of order) await draw(CUR_IMAGES[id]); })();
+}
+function drawMag(cx, cy, clientX, clientY) {
+  const mag = $("mag"); if (!restCanvas) { mag.style.display = "none"; return; }
+  const wrap = $("stageWrap").getBoundingClientRect();
+  mag.style.display = "block";
+  mag.style.left = Math.min(wrap.width - 176, clientX - wrap.left + 18) + "px";
+  mag.style.top = Math.max(4, clientY - wrap.top - 176) + "px";
+  let mc = mag.querySelector("canvas");
+  if (!mc) { mc = document.createElement("canvas"); mc.width = 168; mc.height = 168; mag.appendChild(mc); }
+  const x = mc.getContext("2d");
+  x.imageSmoothingEnabled = false;
+  x.clearRect(0, 0, 168, 168);
+  x.drawImage(restCanvas, (cx / CANVAS * 512) - 28, (cy / CANVAS * 512) - 28, 56, 56, 0, 0, 168, 168);
+  x.strokeStyle = "#37e05a"; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(84, 8); x.lineTo(84, 160); x.moveTo(8, 84); x.lineTo(160, 84); x.stroke();
+}
+function renderPages() {
+  const list = $("pageList"); list.innerHTML = "";
+  applyStackZ();
+  const frontFirst = [...stackOrder].reverse();
+  for (const id of frontFirst) {
+    const it = items[id]; if (!it) continue;
+    const idx = stackOrder.indexOf(id);
+    const row = document.createElement("div"); row.className = "pageRow";
+    row.innerHTML = `<span class="nm">${it.label}</span><span class="zpos">z ${(idx * pageDist).toFixed(3)}</span>`;
+    const up = document.createElement("button"); up.textContent = "↑ front";
+    const dn = document.createElement("button"); dn.textContent = "↓ back";
+    up.disabled = idx === stackOrder.length - 1; dn.disabled = idx === 0;
+    up.addEventListener("click", () => { swapPages(idx, idx + 1); });
+    dn.addEventListener("click", () => { swapPages(idx, idx - 1); });
+    row.append(up, dn);
+    if (loadedLayerIds.has(id)) {
+      const x = document.createElement("button"); x.textContent = "✕"; x.title = "Remove this layer";
+      x.addEventListener("click", () => removeLayerPart(id));
+      row.appendChild(x);
+    }
+    list.appendChild(row);
+  }
+}
+function applyStackZ() {
+  for (let idx = 0; idx < stackOrder.length; idx++) {
+    const it = items[stackOrder[idx]];
+    if (it && it.el && it.el.parentElement === rigRoot) it.el.style.zIndex = String(idx + 1);
+  }
+}
+function swapPages(a, b) {
+  [stackOrder[a], stackOrder[b]] = [stackOrder[b], stackOrder[a]];
+  renderPages(); refreshStack(); commit();
+  status("Page order changed. The GLB and the saved data use this order.");
+}
+function refreshStack() { if (window.ME8_stack) window.ME8_stack(stackOrder.map(id => CUR_IMAGES[id]).filter(Boolean), pageDist); }
+window.ME8_refresh = () => refreshStack();
+$("pageDist").addEventListener("input", () => {
+  pageDist = +$("pageDist").value; $("pageDistVal").textContent = pageDist.toFixed(3);
+  renderPages(); refreshStack();
+});
+$("pageDist").addEventListener("change", () => commit());
+
+/* ---------------- Load Layer: add a page to the paper model ----------------
+   Parts mode: the image becomes a full new part at the FRONT of the
+   stack (the end of stackOrder, back-to-front), pinned at the middle
+   of its own picture, a root until it is connected. It joins the
+   parts list, the pages list, click-to-select, the stack preview,
+   and the Finish GLB/zip (no back picture, so the GLB gives it a
+   double-sided page). Image mode: the image stacks over the solo
+   image as an extra page; the rig points stay with the base image,
+   and Save/Finish carry every loaded layer as its own page. */
+function layerBaseName(name) {
+  return (name || "Layer").replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "Layer";
+}
+function labelFromName(name) { return layerBaseName(name).replace(/_/g, " "); }
+function layerIdFromName(name, asPart) {
+  const base = layerBaseName(name);
+  return asPart ? (/_V1$/i.test(base) ? "Part_" + base : "Part_" + base + "_V1") : "Layer_" + base;
+}
+function uniqueLayerId(name, asPart) {
+  let id = layerIdFromName(name, asPart), n = 2;
+  const taken = t => items[t] || CUR_IMAGES[t] || extraLayers.some(l => l.id === t) || (soloBase && soloBase.id === t);
+  while (taken(id)) {
+    id = asPart ? layerIdFromName(name, true).replace(/_V1$/i, "") + "_" + n + "_V1" : layerIdFromName(name, false) + "_" + n;
+    n++;
+  }
+  return id;
+}
+function entryName(id, fileName, src) {
+  if (fileName && /\.[A-Za-z0-9]+$/.test(fileName)) return fileName;
+  const ext = /^data:image\/webp/i.test(src) ? "WEBP" : /^data:image\/jpeg/i.test(src) ? "JPG" : "PNG";
+  return id + "." + ext;
+}
+function imageCentroid(src) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const S = 256, c = document.createElement("canvas"); c.width = S; c.height = S;
+        const x = c.getContext("2d"); x.drawImage(img, 0, 0, S, S);
+        const d = x.getImageData(0, 0, S, S).data;
+        let sx = 0, sy = 0, n = 0;
+        for (let yy = 0; yy < S; yy++) for (let xx = 0; xx < S; xx++)
+          if (d[(yy * S + xx) * 4 + 3] > 40) { sx += xx; sy += yy; n++; }
+        resolve(n ? [sx / n / (S - 1) * CANVAS, sy / n / (S - 1) * CANVAS] : null);
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+function attachLayerDom(it, src) {
+  const wrap = document.createElement("div");
+  wrap.className = "wrap"; wrap.id = "wrap_" + it.id;
+  wrap.style.transformOrigin = `${it.pin.x}px ${it.pin.y}px`;
+  const behind = document.createElement("div"); behind.className = "wrap";
+  const img = document.createElement("img"); img.className = "part"; img.src = src; img.alt = it.id;
+  const front = document.createElement("div"); front.className = "wrap";
+  const dot = document.createElement("div"); dot.className = "dot";
+  dot.style.left = it.pin.x + "px"; dot.style.top = it.pin.y + "px"; dot.style.display = editing ? "block" : "none";
+  const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = it.label;
+  tag.style.left = it.pin.x + "px"; tag.style.top = it.pin.y + "px"; tag.style.display = editing ? "block" : "none";
+  wrap.append(behind, img, front, dot, tag);
+  it.el = wrap; it.dot = dot; it.tag = tag;
+  dot.addEventListener("pointerdown", ev => startDrag(ev, it));
+  rigRoot.appendChild(wrap);
+}
+async function addLayerPart(fileName, src) {
+  const id = uniqueLayerId(fileName, true);
+  const cen = await imageCentroid(src);
+  const it = mkItem(id, labelFromName(fileName), cen || [CANVAS / 2, CANVAS / 2], null);
+  CUR_IMAGES[id] = src;
+  loadedLayerIds.add(id);
+  items[id] = it; order.push(id); stackOrder.push(id);
+  attachLayerDom(it, src);
+  computeMasks({ [id]: src });
+  buildList(); renderPages(); refreshStack(); makeRestCanvas();
+  select(it); commit();
+  $("howText").textContent = "This model is separated paper parts — and you just loaded a new layer onto the front of the stack. It is its own page: drag its pin in Edit Points, connect it to a parent if it should move with another part, move it in the pages list to change where it sits in the stack, or remove it with the ✕ on its page row. Finish and the paper GLB include it as a double-sided page.";
+  status(`Layer added at the front of the stack: ${it.label}. Its pin sits at the center of its own picture — move it in Edit Points if it belongs somewhere else.`);
+}
+function removeLayerPart(id) {
+  const it = items[id]; if (!it) return;
+  for (const oid of order) if (items[oid].parent === id) items[oid].parent = null;
+  if (it.el) it.el.remove();
+  delete items[id];
+  order = order.filter(o => o !== id); stackOrder = stackOrder.filter(o => o !== id);
+  delete alphaMasks[id];
+  if (selected === it) selected = null;
+  buildList(); renderPages(); refreshStack(); drawWires(); makeRestCanvas();
+  commit();
+  status(`${it.label} layer removed. Anything that was connected to it is a root now.`);
+}
+function addExtraLayer(fileName, src) {
+  const layer = { id: uniqueLayerId(fileName, false), label: labelFromName(fileName), src, fileName, el: null };
+  const img = document.createElement("img");
+  img.className = "part"; img.src = src; img.alt = layer.id;
+  img.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none";
+  $("extraLayers").appendChild(img);
+  layer.el = img; extraLayers.push(layer);
+  renderExtraLayers(); commit();
+  $("howText").textContent = "Stop 1: place the points on the base image — Edit Points, drag them onto the joints, Set. Stop 2: pick a point, name it, and connect it to its parent. The layers you load stack on top of the base image as extra pages; the points belong to the base page. Save or Finish and every loaded layer is included as its own page.";
+  status(`Layer loaded on top: ${layer.label}. It stacks above the base image — remove it any time with the ✕ in Loaded layers.`);
+}
+function renderExtraLayers() {
+  const box = $("extraLayerList"); box.innerHTML = "";
+  $("layersSection").style.display = MODE === "image" && extraLayers.length ? "block" : "none";
+  if (soloBase) {
+    const row = document.createElement("div"); row.className = "pageRow";
+    row.innerHTML = `<span class="nm">${soloBase.label}</span><span class="zpos">base</span>`;
+    box.appendChild(row);
+  }
+  for (const layer of extraLayers) {
+    const row = document.createElement("div"); row.className = "pageRow";
+    row.innerHTML = `<span class="nm">${layer.label}</span><span class="zpos">layer</span>`;
+    const x = document.createElement("button"); x.textContent = "✕"; x.title = "Remove this layer";
+    x.addEventListener("click", () => removeExtraLayer(layer.id));
+    row.appendChild(x); box.appendChild(row);
+  }
+}
+function removeExtraLayer(id) {
+  const layer = extraLayers.find(l => l.id === id); if (!layer) return;
+  if (layer.el) layer.el.remove();
+  extraLayers = extraLayers.filter(l => l.id !== id);
+  renderExtraLayers(); commit();
+  status(`${layer.label} layer removed.`);
+}
+$("loadLayerBtn").addEventListener("click", () => {
+  if (MODE === "3d") { status("Load Layer is for paper models. Pick a 2D paper model first."); return; }
+  $("layerPick").click();
+});
+$("layerPick").addEventListener("change", async ev => {
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = "";
+  if (!f) return;
+  if (!/\.(png|jpe?g|webp)$/i.test(f.name) && !/^image\//.test(f.type || "")) {
+    status("That is not an image file. Load Layer needs a PNG, JPG, or WebP."); return;
+  }
+  const src = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+  if (MODE === "parts") await addLayerPart(f.name, src);
+  else if (MODE === "image") addExtraLayer(f.name, src);
+});
+function twinOf(it) {
+  const t = it.id.includes("Left") ? it.id.replace("Left", "Right") : it.id.includes("Right") ? it.id.replace("Right", "Left") : null;
+  return t && items[t] ? items[t] : null;
+}
+$("mirrorBtn").addEventListener("click", () => {
+  if (!selected) { status("Pick a point first."); return; }
+  const twin = twinOf(selected);
+  if (twin) { movePin(twin, CANVAS - selected.pin.x, selected.pin.y); commit(); status(`${twin.label} mirrored to match ${selected.label}.`); }
+  else status("No Left/Right twin found for this one.");
+});
+$("copyTwinBtn").addEventListener("click", () => {
+  if (!selected) { status("Pick a point first."); return; }
+  const twin = twinOf(selected);
+  if (!twin) { status("No Left/Right twin found for this one."); return; }
+  twin.min = selected.min; twin.max = selected.max;
+  twin.blacklist = JSON.parse(JSON.stringify(selected.blacklist));
+  commit(); status(`Limits and blacklists copied to ${twin.label}.`);
+});
+$("checkBtn").addEventListener("click", () => {
+  const out = [];
+  const roots = order.filter(id => !items[id].parent);
+  if (roots.length > 1) out.push(["bad", `${roots.length} points connect to nothing: ${roots.map(id => items[id].label).join(", ")}. One root is right — connect or accept the rest.`]);
+  for (const id of order) {
+    const it = items[id];
+    if (it.min > it.max) out.push(["bad", `${it.label}: its limit range is backwards (${it.min} to ${it.max}).`]);
+    if (blockedAt(it, 0)) out.push(["bad", `${it.label}: its rest angle, 0°, is blacklisted — it can never rest.`]);
+    if (MODE === "parts" && alphaMasks[id]) {
+      const mx = Math.max(0, Math.min(255, Math.round(it.pin.x / CANVAS * 255)));
+      const my = Math.max(0, Math.min(255, Math.round(it.pin.y / CANVAS * 255)));
+      if (alphaMasks[id][(my * 256 + mx) * 4 + 3] < 40)
+        out.push(["bad", `${it.label}: its pin sits outside the part's picture — the part will swing around empty space.`]);
+    }
+    if (it.parent && !items[it.parent]) out.push(["bad", `${it.label}: connected to a point that does not exist.`]);
+  }
+  $("checkOut").innerHTML = out.length
+    ? out.map(([c, t]) => `<div class="${c}">• ${t}</div>`).join("")
+    : '<div class="good">All checks passed. Every point is connected, resting clear, and pinned on its picture.</div>';
+});
+stage.addEventListener("pointerdown", ev => {
+  if (editing || addArmed || ev.target.closest(".dot")) return;
+  const r = stage.getBoundingClientRect();
+  const x = (ev.clientX - r.left) * CANVAS / r.width, y = (ev.clientY - r.top) * CANVAS / r.height;
+  if (MODE === "parts") {
+    for (const id of [...order].reverse()) {
+      const m = alphaMasks[id]; if (!m) continue;
+      const mx = Math.max(0, Math.min(255, Math.round(x / CANVAS * 255)));
+      const my = Math.max(0, Math.min(255, Math.round(y / CANVAS * 255)));
+      if (m[(my * 256 + mx) * 4 + 3] > 40) { select(items[id]); return; }
+    }
+  } else if (MODE === "image") {
+    let best = null, bd = 70;
+    for (const id of order) { const it = items[id];
+      const d = Math.hypot(it.pin.x - x, it.pin.y - y); if (d < bd) { bd = d; best = it; } }
+    if (best) select(best);
+  }
+});
+let nudging = false;
+window.addEventListener("keydown", ev => {
+  if (!selected || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const step = ev.shiftKey ? 10 : 1; let dx = 0, dy = 0;
+  if (ev.key === "ArrowLeft") dx = -step; else if (ev.key === "ArrowRight") dx = step;
+  else if (ev.key === "ArrowUp") dy = -step; else if (ev.key === "ArrowDown") dy = step;
+  else return;
+  ev.preventDefault();
+  if (!nudging) { nudging = true; }
+  movePin(selected, selected.pin.x + dx, selected.pin.y + dy);
+});
+window.addEventListener("keyup", ev => {
+  if (nudging && ev.key.startsWith("Arrow")) { nudging = false; commit(); }
+});
+
+/* ---------------- paper GLB export and the Finish set ---------------- */
+async function buildPaperGLB() {
+  const views = [], accessors = [], meshes = [], materials = [], images = [], nodes = [], chunks = [];
+  let offset = 0;
+  const addView = (bytes, target) => {
+    const pad = (4 - (bytes.byteLength % 4)) % 4;
+    chunks.push(bytes); if (pad) chunks.push(new Uint8Array(pad));
+    const v = { buffer: 0, byteOffset: offset, byteLength: bytes.byteLength };
+    if (target) v.target = target;
+    views.push(v); offset += bytes.byteLength + pad; return views.length - 1;
+  };
+  const quad = async (name, uri, z, back, dbl) => {
+    const buf = new Uint8Array(await (await fetch(uri)).arrayBuffer());
+    const iv = addView(buf);
+    images.push({ bufferView: iv, mimeType: "image/png", name });
+    const ti = images.length - 1;
+    const mat = { name, pbrMetallicRoughness: { baseColorTexture: { index: ti }, metallicFactor: 0, roughnessFactor: 1 },
+                  alphaMode: "MASK", alphaCutoff: 0.35, doubleSided: !!dbl };
+    materials.push(mat);
+    let pos, nor, uv, idx;
+    if (!back) { pos = new Float32Array([-1, -1, z, 1, -1, z, 1, 1, z, -1, 1, z]); nor = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
+      uv = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]); idx = new Uint16Array([0, 1, 2, 0, 2, 3]); }
+    else { pos = new Float32Array([1, 1, z, -1, 1, z, -1, -1, z, 1, -1, z]); nor = new Float32Array([0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1]);
+      uv = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]); idx = new Uint16Array([0, 2, 1, 0, 3, 2]); }
+    const pv = addView(new Uint8Array(pos.buffer), 34962), nv = addView(new Uint8Array(nor.buffer), 34962);
+    const tv = addView(new Uint8Array(uv.buffer), 34962), xv = addView(new Uint8Array(idx.buffer), 34963);
+    const base = accessors.length;
+    accessors.push(
+      { bufferView: pv, componentType: 5126, count: 4, type: "VEC3", min: [-1, -1, z], max: [1, 1, z] },
+      { bufferView: nv, componentType: 5126, count: 4, type: "VEC3" },
+      { bufferView: tv, componentType: 5126, count: 4, type: "VEC2" },
+      { bufferView: xv, componentType: 5123, count: 6, type: "SCALAR" });
+    meshes.push({ name, primitives: [{ attributes: { POSITION: base, NORMAL: base + 1, TEXCOORD_0: base + 2 }, indices: base + 3, material: materials.length - 1 }] });
+    nodes.push({ mesh: meshes.length - 1, name });
+  };
+  let i = 0;
+  for (const id of stackOrder) {
+    const z = i * pageDist, backUri = CUR_BACKS[id];
+    await quad(id, CUR_IMAGES[id], z, false, !backUri);
+    if (backUri) await quad(id + "_Back", backUri, z - 0.0015, true, false);
+    i++;
+  }
+  const binLen = offset;
+  const gltf = { asset: { version: "2.0", generator: "Model Editor V8" }, scene: 0,
+    scenes: [{ nodes: nodes.map((_, k) => k) }], nodes, meshes, materials, images,
+    textures: images.map((_, k) => ({ source: k })), accessors, bufferViews: views,
+    buffers: [{ byteLength: binLen }] };
+  let jsonStr = JSON.stringify(gltf);
+  while (jsonStr.length % 4) jsonStr += " ";
+  const jsonBytes = new TextEncoder().encode(jsonStr);
+  const total = 12 + 8 + jsonBytes.byteLength + 8 + binLen;
+  const head = new DataView(new ArrayBuffer(12));
+  head.setUint32(0, 0x46546c67, true); head.setUint32(4, 2, true); head.setUint32(8, total, true);
+  const jh = new DataView(new ArrayBuffer(8)); jh.setUint32(0, jsonBytes.byteLength, true); jh.setUint32(4, 0x4e4f534a, true);
+  const bh = new DataView(new ArrayBuffer(8)); bh.setUint32(0, binLen, true); bh.setUint32(4, 0x004e4942, true);
+  return new Blob([head.buffer, jh.buffer, jsonBytes, bh.buffer, ...chunks], { type: "model/gltf-binary" });
+}
+function download(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const CRC_TABLE = (() => { const t = [];
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xffffffff; for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+async function buildZip(entries) {
+  const parts = [], central = []; let offset = 0;
+  for (const [name, blob] of entries) {
+    const data = new Uint8Array(await blob.arrayBuffer());
+    const nameBytes = new TextEncoder().encode(name);
+    const crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+    lh.setUint16(26, nameBytes.length, true);
+    parts.push(lh.buffer, nameBytes, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+    ch.setUint16(28, nameBytes.length, true); ch.setUint32(42, offset, true);
+    central.push(ch.buffer, nameBytes);
+    offset += 30 + nameBytes.length + data.length;
+  }
+  const cdSize = central.reduce((s, p) => s + (p.byteLength || p.length), 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end.buffer], { type: "application/zip" });
+}
+$("finishBtn").addEventListener("click", async () => {
+  $("saveBtn").click();
+  if (MODE === "image" && extraLayers.length && soloBase) {
+    status("Building the layer set: base image, loaded layers, and rig data…");
+    const entries = [[entryName(soloBase.id, soloBase.fileName, soloBase.src), await (await fetch(soloBase.src)).blob()]];
+    for (const l of extraLayers) entries.push([entryName(l.id, l.fileName, l.src), await (await fetch(l.src)).blob()]);
+    entries.push(["Rig_Points_Saved_V1.JSON", new Blob([$("saveBox").value], { type: "application/json" })]);
+    download(await buildZip(entries), "Paper_Layers_Set_V1.zip");
+    status("Layer set downloaded: the base image, every loaded layer as its own page, and the rig data. The points belong to the base page.");
+    return;
+  }
+  if (MODE !== "parts") { status("This model is one image — the rig data is the deliverable. The separated files and GLB come after the points are saved."); return; }
+  status("Building the full set: GLB and zip…");
+  const glb = await buildPaperGLB();
+  download(glb, "Paper_Model_V1.glb");
+  const entries = [];
+  for (const id of stackOrder) {
+    entries.push([id + ".PNG", await (await fetch(CUR_IMAGES[id])).blob()]);
+    if (CUR_BACKS[id]) entries.push([id.replace("_V1", "_Back_V1") + ".PNG", await (await fetch(CUR_BACKS[id])).blob()]);
+  }
+  entries.push(["Rig_Points_Saved_V1.JSON", new Blob([$("saveBox").value], { type: "application/json" })]);
+  entries.push(["Paper_Model_V1.glb", glb]);
+  download(await buildZip(entries), "Paper_Model_Set_V1.zip");
+  status("Full set downloaded: rig data, the paper GLB at your page distance and order, and the zip with every file.");
+});
+
+/* ---------------- panel ---------------- */
+
+function moveLayer(id, dir) {
+  const i = order.indexOf(id); const j = i + dir;
+  if (i < 0 || j < 0 || j >= order.length) return;
+  [order[i], order[j]] = [order[j], order[i]];
+  for (const oid of order) { const it = items[oid];
+    if (it && !it.parent && it.el) rigRoot.appendChild(it.el); }
+  buildList(); drawWires(); commit();
+  status("Layer order changed — Save writes the new order into the rig file.");
+}
+
+function buildList() {
+  const list = $("partList"); list.innerHTML = "";
+  for (const id of order) {
+    const it = items[id];
+    const row = document.createElement("div");
+    row.className = "partRow"; row.id = "row_" + id;
+    row.innerHTML = `<span class="nm">${it.label}</span>`;
+    const sl = document.createElement("input");
+    sl.type = "range"; sl.min = -180; sl.max = 180; sl.step = 1; sl.value = it.angle;
+    sl.addEventListener("input", () => setAngle(it, +sl.value, true));
+    const dg = document.createElement("span"); dg.className = "deg"; dg.textContent = it.angle + "°";
+    const bB = document.createElement("button"); bB.textContent = "▼"; bB.title = "Move layer toward back";
+    bB.addEventListener("click", ev => { ev.stopPropagation(); moveLayer(id, -1); });
+    const bF = document.createElement("button"); bF.textContent = "▲"; bF.title = "Move layer toward front";
+    bF.addEventListener("click", ev => { ev.stopPropagation(); moveLayer(id, 1); });
+    row.append(bB, bF, sl, dg);
+    row.addEventListener("click", ev => { if (ev.target !== sl) select(it); });
+    it._slider = sl; it._deg = dg;
+    list.appendChild(row);
+  }
+  refreshParentOptions();
+}
+function syncRow(it) {
+  if (it._slider) it._slider.value = it.angle;
+  if (it._deg) it._deg.textContent = it.angle + "°";
+  if (selected === it) { $("fAngle").value = it.angle; $("fDeg").textContent = it.angle + "°"; }
+}
+function refreshParentOptions() {
+  const sel = $("fParent"); sel.innerHTML = `<option value="">— none (root) —</option>`;
+  for (const id of order) sel.innerHTML += `<option value="${id}">${items[id].label}</option>`;
+}
+function select(it) {
+  selected = it;
+  document.querySelectorAll(".partRow").forEach(r => r.classList.remove("sel"));
+  const row = $("row_" + it.id); if (row) row.classList.add("sel");
+  document.querySelectorAll(".dot").forEach(d => d.classList.remove("sel"));
+  if (it.dot) it.dot.classList.add("sel");
+  $("fLabel").value = it.label;
+  $("fParent").value = it.parent || "";
+  $("fPinX").value = Math.round(it.pin.x); $("fPinY").value = Math.round(it.pin.y);
+  $("fAngle").value = it.angle; $("fDeg").textContent = it.angle + "°";
+  $("fMin").value = it.min; $("fMax").value = it.max;
+  drawBlacklist(it);
+}
+function drawBlacklist(it) {
+  $("blackList").innerHTML = it.blacklist.map((b, i) =>
+    `<span class="chip" data-i="${i}" title="Click to remove">${b.center}° ±${b.width}</span>`).join("") || '<span class="small">none</span>';
+  $("blackList").querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => {
+    it.blacklist.splice(+c.dataset.i, 1); drawBlacklist(it); commit();
+  }));
+}
+$("fLabel").addEventListener("input", () => { if (!selected) return;
+  selected.label = $("fLabel").value;
+  if (selected.tag) selected.tag.textContent = selected.label;
+  const nm = document.querySelector(`#row_${CSS.escape(selected.id)} .nm`); if (nm) nm.textContent = selected.label;
+  refreshParentOptions(); });
+$("fParent").addEventListener("change", () => { if (!selected) return;
+  selected.parent = $("fParent").value || null; drawWires(); status(`${selected.label} now connects to ${selected.parent ? items[selected.parent].label : "nothing (root)"}.`); });
+$("fPinX").addEventListener("change", () => movePin(selected, +$("fPinX").value, selected.pin.y));
+$("fPinY").addEventListener("change", () => movePin(selected, selected.pin.x, +$("fPinY").value));
+$("fAngle").addEventListener("input", () => { if (selected) setAngle(selected, +$("fAngle").value, true); });
+$("fMin").addEventListener("change", () => { if (selected) { selected.min = +$("fMin").value; setAngle(selected, selected.angle); } });
+$("fMax").addEventListener("change", () => { if (selected) { selected.max = +$("fMax").value; setAngle(selected, selected.angle); } });
+$("blackBtn").addEventListener("click", () => { if (!selected) return;
+  selected.blacklist.push({ center: selected.angle, width: 5 });
+  drawBlacklist(selected); commit(); status(`${selected.label}: ${selected.angle}° blacklisted (±5°).`); });
+function movePin(it, x, y) {
+  if (!it) return;
+  it.pin.x = Math.max(0, Math.min(CANVAS, x)); it.pin.y = Math.max(0, Math.min(CANVAS, y));
+  if (it.el) it.el.style.transformOrigin = `${it.pin.x}px ${it.pin.y}px`;
+  if (it.dot) { it.dot.style.left = it.pin.x + "px"; it.dot.style.top = it.pin.y + "px"; }
+  if (it.tag) { it.tag.style.left = it.pin.x + "px"; it.tag.style.top = it.pin.y + "px"; }
+  if (selected === it) { $("fPinX").value = Math.round(it.pin.x); $("fPinY").value = Math.round(it.pin.y); }
+  drawWires();
+}
+
+/* ---------------- edit points: drag, then Set ---------------- */
+let dragIt = null;
+function startDrag(ev, it) {
+  if (!editing) { select(it); return; }
+  ev.preventDefault(); select(it); dragIt = it;
+  const move = e2 => {
+    const r = stage.getBoundingClientRect();
+    const x = (e2.clientX - r.left) * CANVAS / r.width, y = (e2.clientY - r.top) * CANVAS / r.height;
+    movePin(it, x, y); drawMag(x, y, e2.clientX, e2.clientY);
+  };
+  const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up);
+    dragIt = null; $("mag").style.display = "none"; commit(); };
+  window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+}
+$("editBtn").addEventListener("click", () => {
+  editing = !editing;
+  $("editBtn").classList.toggle("on", editing);
+  $("setBtn").disabled = !editing;
+  document.querySelectorAll(".dot, .tag").forEach(d => d.style.display = editing ? "block" : "none");
+  if (editing) { stopIdle(); for (const id of order) setAngle(items[id], 0); status("Edit Points: drag the green dots onto the joints, then press Set."); }
+});
+$("setBtn").addEventListener("click", () => {
+  if (!editing) return;
+  editing = false; $("editBtn").classList.remove("on"); $("setBtn").disabled = true;
+  document.querySelectorAll(".dot, .tag").forEach(d => d.style.display = "none");
+  status("Points set. Now test the movement, or Save the rig data.");
+});
+$("resetPoseBtn").addEventListener("click", () => { stopIdle(); for (const id of order) setAngle(items[id], 0); });
+
+/* ---------------- test poses ---------------- */
+function stopIdle() { if (idleTimer) { clearInterval(idleTimer); idleTimer = null; } }
+document.querySelectorAll("[data-pose]").forEach(b => b.addEventListener("click", () => {
+  stopIdle(); const pose = b.dataset.pose;
+  if (MODE !== "parts") { status("Poses run on a separated-parts model. This image is for placing points."); return; }
+  const A = (id, d) => { if (items[id]) setAngle(items[id], d); };
+  if (pose === "wave") { A("Part_Arm_Upper_Right_V1", -118); A("Part_Arm_Fore_Right_V1", -24); A("Part_Head_V1", -5); }
+  if (pose === "nod") { A("Part_Head_V1", 10); }
+  if (pose === "idle") { let t = 0; idleTimer = setInterval(() => { t += 0.25;
+    A("Part_Head_V1", Math.round(Math.sin(t) * 4)); A("Part_Arm_Upper_Left_V1", Math.round(Math.sin(t * 0.8) * 5));
+    A("Part_Arm_Upper_Right_V1", Math.round(Math.cos(t * 0.8) * 5)); A("Part_Tail_V1", Math.round(Math.sin(t * 1.3) * 9)); }, 90); }
+}));
+
+/* ---------------- save ---------------- */
+$("saveBtn").addEventListener("click", () => {
+  if (MODE === "3d") { window.ME3D_save && window.ME3D_save(); return; }
+  const data = { format: MODE === "parts" ? "Paper_Rig_Parts" : "Paper_Rig_Points", version: 1,
+    model: $("modelPick").selectedOptions[0].textContent, kind: "paper2d", canvas: CANVAS,
+    ...(MODE === "parts" ? { stack_order: [...stackOrder], page_distance: pageDist, layer_order_back_to_front: [...order] } : {}),
+    ...(MODE === "image" && extraLayers.length ? {
+      stack_order: [soloBase ? soloBase.id : "Layer_Base", ...extraLayers.map(l => l.id)],
+      page_distance: pageDist,
+      pages: [{ id: soloBase ? soloBase.id : "Layer_Base", label: soloBase ? soloBase.label : "Base image",
+                file: soloBase ? soloBase.fileName : "", role: "base — the rig points apply to this page" },
+              ...extraLayers.map(l => ({ id: l.id, label: l.label, file: l.fileName, role: "loaded layer" }))] } : {}),
+    points: order.map(id => { const it = items[id];
+      return { id: it.id, label: it.label, pin: [Math.round(it.pin.x), Math.round(it.pin.y)],
+               parent: it.parent, angle: it.angle, min: it.min, max: it.max, blacklist: it.blacklist }; }) };
+  const text = JSON.stringify(data, null, 1);
+  $("saveBox").value = text;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = "Rig_Points_Saved_V1.JSON"; a.click(); URL.revokeObjectURL(a.href);
+  status("Rig data saved — the file and the box hold the same words.");
+});
+
+/* ---------------- model loading and recognition ---------------- */
+/* ---------------- V10: a GLB is the only way in ----------------
+   Opening a rigged GLB fills everything from the file itself:
+   the 3D view and its joint points (from the nodes' extras),
+   and one 2D paper-parts view per view inside the file, built
+   from the GLB's own layer pictures. */
+let ME11_VIEWS = {}, ME11_URL = null, ME11_NAME = "";
+function ME11_pretty(part) {
+  return part.replace(/^Part_/, "").replace(/_V\d+$/, "").replace(/_/g, " ");
+}
+function ME11_dataURL(bytes, mime) {
+  return new Promise(r => { const fr = new FileReader();
+    fr.onload = () => r(fr.result);
+    fr.readAsDataURL(new Blob([bytes], { type: mime || "image/png" })); });
+}
+async function ME11_openGLB(file) {
+  const buf = await file.arrayBuffer();
+  const dv = new DataView(buf);
+  if (dv.getUint32(0, true) !== 0x46546C67) { status("That file is not a GLB."); return; }
+  const jlen = dv.getUint32(12, true);
+  const gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jlen)));
+  const binStart = 20 + jlen + 8;
+  const imgURL = {};
+  for (const im of gltf.images || []) {
+    const bv = gltf.bufferViews[im.bufferView];
+    const bytes = new Uint8Array(buf, binStart + (bv.byteOffset || 0), bv.byteLength);
+    imgURL[im.name] = await ME11_dataURL(bytes, im.mimeType);
+  }
+  const views = {};
+  for (const node of gltf.nodes || []) {
+    const ex = node.extras; if (!ex || !ex.pin || !ex.view) continue;
+    const V = views[ex.view] = views[ex.view] || {
+      canvas: (gltf.extras && gltf.extras.canvas) || 2048,
+      order: [], pins: {}, parents: {}, labels: {}, images: {}, backs: {} };
+    V.order.push(ex.part);
+    V.pins[ex.part] = ex.pin; V.parents[ex.part] = ex.parent || null;
+    V.labels[ex.part] = ME11_pretty(ex.part);
+    if (imgURL[ex.view + "_" + ex.part]) V.images[ex.part] = imgURL[ex.view + "_" + ex.part];
+    if (imgURL[ex.view + "Back_" + ex.part]) V.backs[ex.part] = imgURL[ex.view + "Back_" + ex.part];
+  }
+  ME11_VIEWS = views;
+  if (ME11_URL) URL.revokeObjectURL(ME11_URL);
+  ME11_URL = URL.createObjectURL(file); ME11_NAME = file.name;
+  const mp = $("modelPick"); mp.innerHTML = "";
+  const o3 = document.createElement("option");
+  o3.value = "glb3d"; o3.textContent = "3D view — " + file.name; mp.appendChild(o3);
+  for (const v of Object.keys(views)) {
+    const o = document.createElement("option");
+    o.value = "view:" + v; o.textContent = v + " — 2D paper parts (from the GLB)";
+    mp.appendChild(o);
+  }
+  mp.value = "glb3d";
+  const n = Object.values(views).reduce((a, v) => a + v.order.length, 0);
+  $("modelInfo").textContent = n
+    ? `${file.name} — ${n} rigged parts across ${Object.keys(views).length} view(s). The points came from inside the GLB.`
+    : `${file.name} — this GLB carries no rig points; showing the 3D model only.`;
+  MODE = "3d"; window.ME3D_startFile && window.ME3D_startFile(ME11_URL, ME11_NAME);
+}
+$("modelPick").addEventListener("change", () => {
+  const v = $("modelPick").value;
+  if (v === "glb3d") { MODE = "3d"; window.ME3D_startFile && window.ME3D_startFile(ME11_URL, ME11_NAME); }
+  if (v.startsWith("view:")) {
+    const view = ME11_VIEWS[v.slice(5)]; if (!view) return;
+    FACING = "front"; $("facePick").value = "front";
+    buildParts(view);
+  }
+});
+$("menuOpenGlb").addEventListener("click", () => $("filePick").click());
+/* ---------------- V9 chrome: facing, menus, sections, theme, status bar ---------------- */
+let FACING = "front";
+function applyFacing() {
+  if (typeof MODE === "undefined" || MODE !== "parts") return;
+  let missing = 0;
+  for (const id of order) {
+    const it = items[id]; if (!it || !it.el) continue;
+    const img = it.el.querySelector("img.part"); if (!img) continue;
+    if (FACING === "back" && CUR_BACKS[id]) img.src = CUR_BACKS[id];
+    else { img.src = CUR_IMAGES[id]; if (FACING === "back") missing++; }
+  }
+  if (FACING === "back") status(missing ? `Back view — ${missing} part(s) have no back yet and show their front.` : "Back view — every part shows its back.");
+}
+$("facePick").addEventListener("change", () => { FACING = $("facePick").value; applyFacing(); });
+
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $("themePick").value = t;
+  $("tickLight").textContent = t === "light" ? "\u2713" : "";
+  $("tickDark").textContent = t === "dark" ? "\u2713" : "";
+  try { localStorage.setItem("ME11_theme", t); } catch (e) {}
+}
+function runAction(act) {
+  if (act === "expandAll" || act === "collapseAll") {
+    document.querySelectorAll("#panel .sect").forEach(s => s.classList.toggle("closed", act === "collapseAll"));
+    return;
+  }
+  if (act === "themeLight") return setTheme("light");
+  if (act === "themeDark") return setTheme("dark");
+  if (act === "howTo") {
+    const s = document.querySelector("#panel .sect");
+    if (s) { s.classList.remove("closed"); $("panel").scrollTop = 0; }
+    return;
+  }
+  const el = $(act); if (el && !el.disabled) el.click();
+}
+document.querySelectorAll(".menu > button").forEach(btn => {
+  btn.addEventListener("click", ev => {
+    const m = btn.parentElement, was = m.classList.contains("open");
+    document.querySelectorAll(".menu.open").forEach(x => x.classList.remove("open"));
+    if (!was) m.classList.add("open");
+    ev.stopPropagation();
+  });
+});
+document.addEventListener("click", () =>
+  document.querySelectorAll(".menu.open").forEach(x => x.classList.remove("open")));
+document.querySelectorAll(".menuDrop button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".menu.open").forEach(x => x.classList.remove("open"));
+  if (b.dataset.act) runAction(b.dataset.act);
+  else if (b.dataset.char) { $("modelPick").value = b.dataset.char; $("modelPick").dispatchEvent(new Event("change")); }
+  else if (b.dataset.pose) { const t = document.querySelector(`#panel button[data-pose="${b.dataset.pose}"]`); if (t) t.click(); }
+}));
+$("themePick").addEventListener("change", () => setTheme($("themePick").value));
+$("densityPick").addEventListener("change", () => {
+  document.body.classList.toggle("compact", $("densityPick").value === "compact");
+  try { localStorage.setItem("ME11_density", $("densityPick").value); } catch (e) {}
+});
+function groupSections() {
+  const panel = $("panel");
+  const kids = [...panel.childNodes];
+  let sect = null;
+  for (const node of kids) {
+    if (node.nodeType !== 1) continue;
+    if (node.tagName === "H2") {
+      const d = document.createElement("div"); d.className = "sect";
+      node.parentNode.insertBefore(d, node); d.appendChild(node);
+      node.addEventListener("click", () => d.classList.toggle("closed"));
+      sect = d; continue;
+    }
+    if (node.querySelector && node.querySelector(":scope > h2")) {
+      node.classList.add("sect");
+      const h = node.querySelector(":scope > h2");
+      h.addEventListener("click", () => node.classList.toggle("closed"));
+      sect = null; continue;
+    }
+    if (sect) sect.appendChild(node);
+  }
+}
+(function initChrome() {
+  let t = "light"; try { t = localStorage.getItem("ME11_theme") || "light"; } catch (e) {}
+  setTheme(t);
+  let d = "comfortable"; try { d = localStorage.getItem("ME11_density") || "comfortable"; } catch (e) {}
+  $("densityPick").value = d;
+  document.body.classList.toggle("compact", d === "compact");
+  groupSections();
+})();
+setInterval(() => {
+  const bar = $("statusbar"); if (!bar) return;
+  const mp = $("modelPick");
+  const charName = mp.options[mp.selectedIndex] ? mp.options[mp.selectedIndex].textContent : "";
+  const n = (typeof order !== "undefined" && order) ? order.length : 0;
+  $("facePick").disabled = (typeof MODE === "undefined" || MODE !== "parts");
+  bar.innerHTML = "";
+  const mk = (label, val) => { const s = document.createElement("span"); s.append(label + " "); const b = document.createElement("b"); b.textContent = val; s.appendChild(b); bar.appendChild(s); };
+  mk("Character:", charName); mk("Facing:", FACING); mk("Parts:", String(n));
+  const last = document.createElement("span"); last.className = "last"; last.textContent = $("status").textContent || ""; bar.appendChild(last);
+}, 600);
+
+$("loadBtn").addEventListener("click", () => $("filePick").click());
+$("filePick").addEventListener("change", async ev => {
+  const files = [...ev.target.files]; if (!files.length) return;
+  const glb = files.find(f => /\.glb$/i.test(f.name));
+  if (glb) { ME11_openGLB(glb); return; }
+  const pngs = files.filter(f => /^Part_.*\.PNG$/i.test(f.name));
+  const rigFile = files.find(f => /Rig_Points.*\.JSON$/i.test(f.name));
+  let rig = null;
+  if (rigFile) { try { rig = JSON.parse(await rigFile.text()); } catch (e) { /* fall through */ } }
+  if (pngs.length > 1) {
+    const images = {}, pins = {}, parents = {}, labels = {}, behind = [];
+    const defs = rig ? (rig.points || []) : [];
+    for (const f of pngs) {
+      const id = f.name.replace(/\.PNG$/i, "");
+      images[id] = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+      const d = defs.find(p => p.id === id);
+      pins[id] = d ? d.pin : [1024, 1024]; parents[id] = d ? d.parent : null;
+      labels[id] = d ? d.label : id; if (d && d.paint === "behind") behind.push(id);
+    }
+    const ord = defs.length ? defs.map(p => p.id).filter(id => images[id]) : Object.keys(images);
+    for (const id of Object.keys(images)) if (!ord.includes(id)) ord.push(id);
+    $("modelInfo").textContent = `Loaded ${pngs.length} parts from your files — recognized as a 2D paper model.`;
+    buildParts({ canvas: 2048, order: ord, parents, behind, pins, labels, images });
+    return;
+  }
+  const img = files.find(f => /\.(png|jpe?g|webp)$/i.test(f.name));
+  if (img) {
+    const url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(img); });
+    $("modelInfo").textContent = `${img.name} — recognized as one image to rig.`;
+    buildImage(url, rig ? rig.points.map(p => ({ id: p.id, label: p.label, pin: p.pin, parent: p.parent })) : [], img.name);
+  }
+});
+/* ---------------- add and remove points (image mode) ---------------- */
+const addBtn = document.createElement("button"); addBtn.textContent = "Add Point";
+const delBtn = document.createElement("button"); delBtn.textContent = "Delete Point"; delBtn.className = "danger";
+$("editBtn").parentElement.append(addBtn, delBtn);
+let addArmed = false, pointCount = 0;
+addBtn.addEventListener("click", () => {
+  if (MODE !== "image") { status("Add Point works on a single image to rig. On a parts model the parts are the points."); return; }
+  addArmed = true; status("Click the picture where the next point goes.");
+});
+stage.addEventListener("pointerdown", ev => {
+  if (!addArmed || MODE !== "image") return;
+  addArmed = false;
+  const r = stage.getBoundingClientRect();
+  const x = Math.round((ev.clientX - r.left) * CANVAS / r.width), y = Math.round((ev.clientY - r.top) * CANVAS / r.height);
+  pointCount += 1;
+  const id = "Point_" + pointCount;
+  const it = mkItem(id, "Point " + pointCount, [x, y], null);
+  items[id] = it; order.push(id);
+  const dot = document.createElement("div"); dot.className = "dot";
+  dot.style.left = x + "px"; dot.style.top = y + "px"; dot.style.display = editing ? "block" : "none";
+  const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = it.label;
+  tag.style.left = x + "px"; tag.style.top = y + "px"; tag.style.display = editing ? "block" : "none";
+  $("soloDots").append(dot, tag); it.dot = dot; it.tag = tag;
+  dot.addEventListener("pointerdown", e2 => startDrag(e2, it));
+  buildList(); select(it); commit();
+  status(`Point placed at ${x}, ${y}. Name it, connect it, then place the next one.`);
+});
+delBtn.addEventListener("click", () => {
+  if (MODE !== "image" || !selected) { status("Pick a point on an image model first."); return; }
+  const id = selected.id;
+  selected.dot.remove(); selected.tag.remove();
+  for (const oid of order) if (items[oid].parent === id) items[oid].parent = null;
+  delete items[id]; order = order.filter(o => o !== id); selected = null;
+  buildList(); drawWires(); commit(); status("Point deleted. Its children are now roots — reconnect them.");
+});
+
+document.addEventListener("change", () => commit());
+
+fit();
+</script>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+/* 3D mode: the GLB with its joint points. Click a point (or its row),
+   drag it in the view plane, fine-tune with the X/Y/Z sliders, and
+   Save writes the updated Joint Points file. */
+const host = document.getElementById("gl3d");
+let renderer = null, scene = null, camera = null, controls = null, raf = 0;
+let spheres = {}, lines = null, selName = null, card = null;
+const P3 = JSON.parse(JSON.stringify(POINTS3D));
+function el(tag, cls, parent, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; parent && parent.appendChild(e); return e; }
+function setup() {
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(host.clientWidth, host.clientHeight);
+  host.appendChild(renderer.domElement);
+  scene = new THREE.Scene(); scene.background = new THREE.Color(document.documentElement.dataset.theme === "dark" ? 0x14181d : 0xe9edf1);
+  camera = new THREE.PerspectiveCamera(45, host.clientWidth / host.clientHeight, 0.01, 100);
+  camera.position.set(1.4, 0.5, 1.9);
+  controls = new OrbitControls(camera, renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(2, 3, 2); scene.add(dl);
+  card = el("div", "", host);
+  card.style.cssText = "position:absolute;left:12px;bottom:12px;background:rgba(20,24,29,.92);border:1px solid #0097a7;border-radius:8px;padding:10px 12px;font-size:12px;max-width:300px";
+  card.innerHTML = "<b>3D joint points</b><br>Click a point, drag it in the view, or use the sliders.<br><span id='g3info'>No point selected.</span><div id='g3sliders'></div><div id='g3layers'></div>";
+  const loop = () => { raf = requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); };
+  loop();
+}
+function buildPoints() {
+  for (const k of Object.keys(spheres)) { scene.remove(spheres[k]); }
+  spheres = {};
+  if (lines) { scene.remove(lines); lines.geometry.dispose(); }
+  const pos = [];
+  for (const p of P3.points) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.016, 14, 12),
+      new THREE.MeshBasicMaterial({ color: p.name === selName ? 0xffd23e : 0x37e05a }));
+    m.position.set(p.x, p.y, p.z); m.userData.name = p.name;
+    scene.add(m); spheres[p.name] = m;
+    if (p.parent) { const q = P3.points.find(o => o.name === p.parent);
+      if (q) pos.push(p.x, p.y, p.z, q.x, q.y, q.z); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  lines = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x37e05a }));
+  scene.add(lines);
+  const list = document.getElementById("partList"); list.innerHTML = "";
+  for (const p of P3.points) {
+    const row = el("div", "partRow" + (p.name === selName ? " sel" : ""), list);
+    row.innerHTML = `<span class="nm">${p.name}</span><span class="deg">${jointAngle(p.name)}</span>`;
+    row.addEventListener("click", () => select3(p.name));
+  }
+}
+function jointAngle(name) {
+  const p = P3.points.find(o => o.name === name);
+  if (!p || !p.parent) return "root";
+  const par = P3.points.find(o => o.name === p.parent);
+  const kid = P3.points.find(o => o.parent === name);
+  if (!par || !kid) return "—";
+  const a = new THREE.Vector3(p.x - par.x, p.y - par.y, p.z - par.z);
+  const b = new THREE.Vector3(kid.x - p.x, kid.y - p.y, kid.z - p.z);
+  return Math.round(THREE.MathUtils.radToDeg(a.angleTo(b))) + "°";
+}
+function select3(name) {
+  selName = name;
+  for (const k of Object.keys(spheres)) spheres[k].material.color.set(k === name ? 0xffd23e : 0x37e05a);
+  const p = P3.points.find(o => o.name === name);
+  document.getElementById("g3info").innerHTML =
+    `<b>${name}</b> — joint angle ${jointAngle(name)}<br>x ${p.x.toFixed(3)} · y ${p.y.toFixed(3)} · z ${p.z.toFixed(3)}${p.paper ? "<br>Paper point — moves on X and Y only." : ""}`;
+  const box = document.getElementById("g3sliders"); box.innerHTML = "";
+  for (const axis of (p.paper ? ["x", "y"] : ["x", "y", "z"])) {
+    const row = el("div", "row", box);
+    row.innerHTML = `<label>${axis.toUpperCase()}</label>`;
+    const sl = el("input", "", row); sl.type = "range"; sl.min = -1; sl.max = 1; sl.step = 0.001; sl.value = p[axis];
+    sl.addEventListener("input", () => { p[axis] = +sl.value; spheres[name].position[axis] = p[axis]; buildPointsSoft(); select3(name); });
+    row.appendChild(sl);
+  }
+  buildPointsSoft();
+}
+function buildPointsSoft() {
+  for (const p of P3.points) if (spheres[p.name]) spheres[p.name].position.set(p.x, p.y, p.z);
+  if (lines) { const pos = [];
+    for (const p of P3.points) if (p.parent) { const q = P3.points.find(o => o.name === p.parent);
+      if (q) pos.push(p.x, p.y, p.z, q.x, q.y, q.z); }
+    lines.geometry.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); }
+}
+let loadedURL = null, currentModel = null, loadToken = 0;
+function ME11_harvest(root) {
+  const pts = [];
+  root.traverse(o => {
+    const ex = o.userData; if (!ex || !ex.pin || !ex.view || !o.geometry) return;
+    o.geometry.computeBoundingBox();
+    const bb = o.geometry.boundingBox;
+    const cx = (bb.min.x + bb.max.x) / 2;
+    pts.push({ name: ex.view + " " + ex.part,
+      x: cx + ex.pin[0] / 1024 - 1, y: 1 - ex.pin[1] / 1024, z: bb.min.z + 0.02,
+      parent: ex.parent ? ex.view + " " + ex.parent : null, paper: true });
+  });
+  P3.points = pts;
+}
+
+/* V11: light mode reaches the 3D stage too - both scenes take
+   the theme's background the moment the theme changes. */
+new MutationObserver(() => {
+  const dark = document.documentElement.dataset.theme === "dark";
+  if (scene) scene.background = new THREE.Color(dark ? 0x14181d : 0xe9edf1);
+  if (stackScene) stackScene.background = new THREE.Color(dark ? 0x10141a : 0xe2e7ec);
+}).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* V11: a loaded GLB is framed in the centre of the window -
+   the camera and the orbit target move to the model's own
+   centre, at a distance that fits the whole model. */
+function ME11_frame(root) {
+  if (!camera || !controls) return;
+  const bb = new THREE.Box3().setFromObject(root);
+  if (bb.isEmpty()) return;
+  const ctr = bb.getCenter(new THREE.Vector3());
+  const dia = bb.getSize(new THREE.Vector3()).length();
+  if (!(dia > 0)) return;
+  controls.target.copy(ctr);
+  const dir = camera.position.clone().sub(ctr);
+  if (dir.lengthSq() < 1e-6) dir.set(0.6, 0.45, 1);
+  dir.normalize();
+  camera.position.copy(ctr).addScaledVector(dir, dia * 1.05);
+  camera.near = dia / 100; camera.far = dia * 50; camera.updateProjectionMatrix();
+  controls.update();
+}
+
+/* V11: the Layers panel - every page of the loaded model,
+   grouped by the axis its stack runs on, front first, with
+   buttons that swap two pages' depths live (move the neck
+   behind the face yourself). */
+function ME11_layers() {
+  const box = document.getElementById("g3layers"); if (!box) return;
+  box.innerHTML = "";
+  if (!currentModel) return;
+  const rows = [];
+  currentModel.traverse(o => {
+    if (!o.geometry) return;
+    o.geometry.computeBoundingBox();
+    const bb = o.geometry.boundingBox;
+    const sx = bb.max.x - bb.min.x, sy = bb.max.y - bb.min.y, sz = bb.max.z - bb.min.z;
+    const axis = (sz <= sx && sz <= sy) ? "z" : (sx <= sy ? "x" : "y");
+    rows.push({ o, axis, c: (bb.min[axis] + bb.max[axis]) / 2 + o.position[axis],
+                name: o.name || "layer" });
+  });
+  for (const axis of ["z", "x", "y"]) {
+    const grp = rows.filter(r => r.axis === axis).sort((a, b) => b.c - a.c);
+    if (!grp.length) continue;
+    const h = el("div", "", box);
+    h.innerHTML = `<b>Layers — ${axis.toUpperCase()} stack, front first</b>`;
+    grp.forEach((r, i) => {
+      const row = el("div", "row", box);
+      const lab = el("span", "", row); lab.textContent = r.name; lab.style.flex = "1";
+      const up = el("button", "", row, "▲"); up.title = "Move toward front";
+      const dn = el("button", "", row, "▼"); dn.title = "Move toward back";
+      up.disabled = i === 0; dn.disabled = i === grp.length - 1;
+      up.addEventListener("click", () => ME11_swap(r, grp[i - 1]));
+      dn.addEventListener("click", () => ME11_swap(r, grp[i + 1]));
+    });
+  }
+}
+function ME11_swap(a, b) {
+  if (!a || !b) return;
+  const d = b.c - a.c;
+  a.o.position[a.axis] += d; b.o.position[b.axis] -= d;
+  ME11_layers();
+}
+
+function loadGLB(url) {
+  if (loadedURL === url && currentModel) { buildPoints(); return; }
+  loadedURL = url;
+  const token = ++loadToken;
+  new GLTFLoader().load(url, g => {
+    if (token !== loadToken) return; // a newer pick already won
+    if (currentModel) {
+      // One model at a time: the old model leaves before the new
+      // one enters, so two models never share the stage.
+      scene.remove(currentModel);
+      currentModel.traverse(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) (Array.isArray(o.material) ? o.material : [o.material])
+          .forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
+      });
+    }
+    currentModel = g.scene;
+    scene.add(g.scene); ME11_harvest(g.scene); buildPoints();
+    ME11_frame(g.scene); ME11_layers();
+  },
+    undefined, () => { document.getElementById("g3info").textContent =
+      "The GLB could not be loaded. Use Load files… and pick the model file."; buildPoints(); });
+}
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+let dragP = null, dragPlane = new THREE.Plane();
+function onDown(ev) {
+  if (!renderer) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(Object.values(spheres));
+  if (hits.length) {
+    dragP = P3.points.find(o => o.name === hits[0].object.userData.name);
+    select3(dragP.name);
+    if (dragP.paper) dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 0, 1), hits[0].object.position);
+    else dragPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), hits[0].object.position);
+    controls.enabled = false;
+  }
+}
+function onMove(ev) {
+  if (!dragP) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const out = new THREE.Vector3();
+  if (ray.ray.intersectPlane(dragPlane, out)) {
+    dragP.x = out.x; dragP.y = out.y; if (!dragP.paper) dragP.z = out.z;
+    buildPointsSoft(); select3(dragP.name);
+  }
+}
+function onUp() { dragP = null; if (controls) controls.enabled = true; }
+window.ME3D_start = function (url, name) {
+  const eh = document.getElementById("emptyHint"); if (eh) eh.style.display = "none";
+  document.getElementById("stage").style.display = "none";
+  document.getElementById("pagesSection").style.display = "none";
+  document.getElementById("layersSection").style.display = "none";
+  host.style.display = "block";
+  const gl11 = document.getElementById("g3layers"); if (gl11) gl11.innerHTML = "";
+  document.getElementById("kindBadge").textContent = "3D model — GLB";
+  document.getElementById("listTitle").textContent = "Joint points";
+  document.getElementById("howText").textContent = "A 3D GLB model with joint points. Click a point to select it, drag it in the view, fine-tune with the sliders. Save writes the updated Joint Points file.";
+  document.getElementById("modelInfo").textContent = name || "Loaded GLB model.";
+  if (!renderer) { setup(); host.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); }
+  renderer.setSize(host.clientWidth, host.clientHeight);
+  loadGLB(url || PAPER_GLB);
+};
+window.ME3D_startFile = (url, name) => {
+  P3.points = [];
+  window.ME3D_start(url, name);
+};
+window.ME3D_stop = function () { host.style.display = "none"; };
+window.ME3D_save = function () {
+  const text = JSON.stringify(P3, null, 1);
+  document.getElementById("saveBox").value = text;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = "Joint_Points_3D_Saved_V1.JSON"; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* The paper stack preview: the pages floating at the chosen
+   distance, turning slowly, so the stack can be judged in 3D
+   before anything is exported. */
+let stackRenderer = null, stackScene = null, stackCam = null, stackGroup = null;
+window.ME8_stack = function (uris, dist) {
+  const hostEl = document.getElementById("stackPrev");
+  if (!hostEl || !uris.length) return;
+  if (!stackRenderer) {
+    stackRenderer = new THREE.WebGLRenderer({ antialias: true });
+    stackRenderer.setSize(hostEl.clientWidth, hostEl.clientHeight);
+    hostEl.appendChild(stackRenderer.domElement);
+    stackScene = new THREE.Scene(); stackScene.background = new THREE.Color(document.documentElement.dataset.theme === "dark" ? 0x10141a : 0xe2e7ec);
+    stackCam = new THREE.PerspectiveCamera(40, hostEl.clientWidth / hostEl.clientHeight, 0.01, 100);
+    stackCam.position.set(1.15, 0.35, 2.3); stackCam.lookAt(0, 0, 0.2);
+    stackScene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    const spin = () => { requestAnimationFrame(spin);
+      if (stackGroup && hostEl.offsetParent) { stackGroup.rotation.y += 0.008; stackRenderer.render(stackScene, stackCam); } };
+    spin();
+  }
+  if (stackGroup) { stackScene.remove(stackGroup); }
+  stackGroup = new THREE.Group();
+  const loader = new THREE.TextureLoader();
+  uris.forEach((uri, i) => {
+    const tex = loader.load(uri);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2, 2),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide }));
+    m.position.z = i * dist;
+    stackGroup.add(m);
+  });
+  stackGroup.position.z = -(uris.length - 1) * dist / 2;
+  stackScene.add(stackGroup);
+};
+if (window.ME8_refresh) window.ME8_refresh();
+</script>
+</body>
+</html>
