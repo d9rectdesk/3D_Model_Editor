@@ -1,0 +1,29 @@
+Model Editor V10 - what changed (2026-11-14, Solomon's rulings)
+
+NO BUILT-IN MODELS. The editor opens empty and shows one hint:
+open a GLB file to start editing. The Character menu and the
+model picker hold no characters any more - the picker starts
+with "Open a GLB file to start..." and fills with the opened
+file's own views.
+
+A rigged GLB carries its rig inside it: every part node has
+extras with its view, part name, pin (canvas pixels), and
+parent. Opening such a GLB (Load files..., the Character menu's
+"Open a GLB file...", or the Load button) does three things:
+1. Opens the 3D view; the joint points are harvested from the
+   nodes' extras and placed on the model.
+3. Builds one 2D paper-parts view per view inside the GLB
+   (Front, Back, Side...), from the GLB's own layer pictures,
+   with pins and parents from the extras - ready for movement
+   tests and for saving blacklisted ranges.
+2. Adds those views to the picker beside the 3D view entry.
+
+GLBs without rig extras (the older Duke and Kevin paper GLBs)
+still open in the 3D view, with no points. Loose PNG part sets
+and rig JSON files load exactly as before. All V9 chrome stays:
+menus, light/dark themes, spacing, collapsible sections,
+facing control, status bar.
+
+Support files live on GitHub BESIDE the app, never inside it:
+the man's GLB, the GLB-to-PNG layer extractor, the separators
+and builders that made him, and his rig files.
