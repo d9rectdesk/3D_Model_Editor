@@ -1,0 +1,25 @@
+Model Editor V15 - what changed (2026-11-15, Issue 5 gap)
+
+APPROVED ANGLES FROM TESTING. A point's approved angle
+range no longer has to be typed in from memory after
+testing. While you test a point - with its angle slider,
+its slider in the parts list, or a test movement pose -
+the editor remembers the lowest and highest angle the
+point actually reached.
+
+- The Selected panel gains a Tested row showing that
+  range, or "not tested yet" before the point has moved.
+- Approve tested range as limits sets the point's limits
+  to the tested range in one click. The limits are the
+  same ones the saved rig file already carries, so an
+  approved range saves and loads with the rig.
+- Clear tested forgets the range so a fresh test can
+  start. Approving with nothing tested changes nothing.
+- Undo, redo, and the browser autosave carry the tested
+  range too, so a restore never loses a test in progress.
+
+Everything from V14 stands: every point carries a written
+description that saves into its points file, the 3D
+movement player (Snake and Spiral) plays over the placed
+points, the views are separate, and the editor still
+opens empty with no model inside it.
