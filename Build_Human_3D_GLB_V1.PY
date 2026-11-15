@@ -76,7 +76,13 @@ def side_back_quad(name, png, x):
 
 total = 0
 # The front figure: front layers in paint order at graded
-# depths, each with its true back layer behind it.
+# depths, each with its true back layer behind it. The back
+# layers stack by the BACK view's own order, so the figure
+# reads right from behind too - a stack that only follows the
+# front order inverts from behind (Solomon's catch, 2026-11-14:
+# the neck sat in front of the face from behind).
+brig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_Back_V1.JSON")))
+back_index = {p: j for j, p in enumerate(brig["layer_order_back_to_front"])}
 rig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_V1.JSON")))
 order = rig["layer_order_back_to_front"]
 for i, part in enumerate(order):
@@ -89,11 +95,15 @@ for i, part in enumerate(order):
     front_quad("Figure_" + part, os.path.join(Home, "Parts_V1", part + ".PNG"),
                z, extras, ds=not has_back)
     if has_back:
-        back_quad("FigureBack_" + part, back_png, z - 0.0015)
+        back_quad("FigureBack_" + part, back_png,
+                  -0.02 - back_index[part] * 0.004)
     total += 1
 
 # The profile: side layers on the YZ plane, mirrored backs
 # facing the other way, so both sides read as the man.
+sbrig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_Side_Back_V1.JSON")))
+sback_index = {p.replace("_Side_Back_V1", "_V1"): j
+               for j, p in enumerate(sbrig["layer_order_back_to_front"])}
 srig = json.load(open(os.path.join(Home, "Rig_Points_Humanoid_Side_V1.JSON")))
 sorder = srig["layer_order_back_to_front"]
 for i, part in enumerate(sorder):
@@ -108,7 +118,8 @@ for i, part in enumerate(sorder):
               os.path.join(Home, "Parts_Side_V1", part + ".PNG"),
               x, extras, ds=not has_back)
     if has_back:
-        side_back_quad("FigureSideBack_" + part, back_png, -x)
+        side_back_quad("FigureSideBack_" + part, back_png,
+                       -(0.002 + sback_index[part] * 0.0012))
     total += 1
 
 bin_data = b"".join(b for b, _ in bin_parts)
