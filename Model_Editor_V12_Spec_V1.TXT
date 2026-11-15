@@ -1,0 +1,33 @@
+Model Editor V12 - what changed (2026-11-14, Solomon's report)
+
+THE VIEWS ARE SEPARATE. The human man is no longer assembled
+into one overlapped figure. His front, back, and side stand
+apart as three groups, and each is edited on its own - in the
+picker as its own 2D paper view, and in the 3D view as its own
+figure standing clear of the others.
+
+THE 2D VIEWS OPEN AGAIN. Switching the picker from the 3D view
+to a 2D view showed nothing: the view data from the GLB was
+missing one list the parts builder needs, and the builder died
+after clearing the stage. That is fixed, the builder no longer
+depends on the list being present, and if a view ever fails to
+build, the status line now says why instead of going blank.
+
+THE LAYERS PANEL IS READABLE. It was a wall of bare buttons -
+the layer names took the page's dark text colour onto the dark
+panel, and the whole list had no scroll box, so it grew past
+the screen. Names are now light and readable, grouped by
+stack, inside their own scroll area.
+
+POINTS SIT ON THEIR PAGES. Rig points are placed through each
+page's own position in the model, so the side view's points
+land on the side figure instead of floating beside it.
+
+CHROME TUNING. Both 3D renderers ask Chrome for the
+high-performance GPU and cap their pixel ratio at 2; the 3D
+view renders only while it is on screen; and when a new model
+replaces an old one, the old model's GPU memory is released.
+
+Everything from V11 stands: the editor opens empty, layers
+can be reordered, paper points move on X and Y only, the
+model loads centred, and the stage follows light and dark.
