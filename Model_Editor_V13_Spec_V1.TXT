@@ -1,0 +1,24 @@
+Model Editor V13 - what changed (2026-11-15, Solomon's design)
+
+3D MOVEMENT. The 3D view gains a movement player, built the
+way Solomon described it: the model's points keep the same
+2D placement, and in 3D they stand on a line perpendicular
+to the rest. A wave runs down the chain of points, each
+point following the one before it by its depth in the
+chain.
+
+- Snake: the wave travels along the perpendicular, so the
+  chain ripples in depth like a snake.
+- Spiral: the wave circles around the perpendicular, so
+  the chain corkscrews like a spiral.
+- Amount and Speed sliders set how far and how fast.
+- Stop puts every point back on its exact placed position.
+
+The points themselves are not changed by playing - the
+movement is a preview over the placed rig, and saving
+still writes the placed points. Stop the movement before
+dragging points.
+
+Everything from V12 stands: the views are separate, the 2D
+views open, the Layers panel is readable, points sit on
+their pages, and the Chrome tuning is in.
