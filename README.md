@@ -30,6 +30,14 @@ The human man in this repository is a complete paper character: front, back, and
 - Joint_Points_3D_V1.JSON — a 3D joint-points file in the format the editor saves and loads, kept from earlier work.
 - README.md — this file.
 
+## Roadmap
+
+Work is tracked in this repository's Issues, grouped by version.
+
+Version 21 is frozen and in progress (issue #57): the parts-list defect fix, the Models list, picture intake at any count of three or more, and wording that keeps language-model abilities honestly described as plugin-only.
+
+The next version carries the larger build-out: a single emoji or a short description becomes a 3D model, the colour, erase, and sculpt brushes, torrent-logic operations, loading more models alongside the open one, the triangle-count slider, and the open plugin point for language-model helpers. Throughout, the theme stays modern and not overly cluttered, and the app never presents language-model abilities as built in.
+
 ## Asking for features
 
 Feature requests live in this repository's Issues, each written in plain language with the enhancement label.
