@@ -1,0 +1,27 @@
+Model Editor V16 - what changed (2026-11-15, mobile touch)
+
+TOUCH AND SMALL SCREENS. The editor now works on a
+mobile touch screen. V15 already had the viewport tag
+and dragged by pointer events; V16 adds the style rules
+that make touch behave and the layout fit.
+
+- Touch drags move points and views instead of
+  scrolling the page: touch-action none on the 2D
+  stage, the 3D stage and its canvas, and every rig
+  point dot. The body and the controls use manipulation,
+  so taps are never delayed or double-tap-zoomed.
+- On screens 860px wide and below the layout stacks:
+  the stage takes the full width on top, the side panel
+  moves below it and scrolls its own length, and the
+  toolbars wrap. Nothing needs sideways scrolling.
+- On coarse pointers (touch), buttons, menus, and list
+  rows get a 44px tap height, slider thumbs grow to
+  30px, and each rig point's hit area grows to a 28px
+  radius through a clear halo - the drawn dot itself
+  stays 26px, exactly as on a fine pointer.
+
+Everything from V15 stands unchanged: every element id
+(75 by the standing census), every feature, the tested
+angle ranges, the 3D movement player, and the editor
+still opens empty with no model inside it. Proof is
+code-level only; no real device has touched it yet.
