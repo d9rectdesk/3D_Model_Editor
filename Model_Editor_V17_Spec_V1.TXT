@@ -1,0 +1,95 @@
+Model Editor V17 - what changed (2026-11-15, the GLB rig release)
+
+THE GLB IS EDITABLE NOW. Solomon's order: a loaded GLB
+must be editable with this tool - move the rig, add or
+remove points, connect points by pressing one and
+dragging, everything in the viewfinder - and the add
+points feature must work; before, it was not working.
+
+What was wrong, proven in a headless Chromium drive of
+V16 with the real Human_Man_Paper.GLB: Add Point answered
+"works on a single image" in the 3D view and in every 2D
+parts view alike, and Save wrote a JSON sidecar while the
+GLB itself was never rewritten - a moved pin was back at
+its old place the moment the GLB reopened. The add/remove
+section was gated to single-image mode only, and no save
+path ever reached the GLB's own extras.
+
+- The add/remove section is rewritten whole (never
+  patched over). One state machine serves both 2D
+  viewfinders - a single image, and any 2D view of a
+  loaded GLB. Arming Add Point enters Edit mode first,
+  so a placed point is always visible.
+- Add: click empty picture to place a root point, on an
+  image or on a GLB view. On a GLB view the new point is
+  a bare rig point - a dot and a tag, no picture - and in
+  the saved GLB it is a node carrying extras only.
+- Connect while adding: press a point and drag - a
+  yellow rubber band follows the pointer. Release on
+  empty picture and a new point is born there, already
+  parented to the pressed point, its wire drawn. Release
+  on another point and that point is re-parented under
+  the pressed one. A loop back under itself is refused.
+  A press that lands on a dot takes that dot's point
+  exactly, never a neighbour.
+- Remove: Delete takes the selected point or part. Its
+  children move up to the deleted point's own parent -
+  re-parented, never silently orphaned. A removed part
+  leaves the saved GLB entirely, back picture and all.
+- Move: dragging a point in a 2D view already moved its
+  pin; now the move is written home (below). Dragging a
+  point in the 3D view writes home the same way - each
+  point rides its node's world transform back to a
+  canvas pin.
+- Save GLB (a new button, and plain Save on a GLB view
+  or in the 3D view): the whole rig - pins, parents,
+  labels, descriptions, for every view in the file - is
+  written back into the GLB's own node extras and the
+  updated GLB downloads under the file's own name. The
+  binary chunk is carried across byte for byte; only
+  the JSON chunk is rebuilt. The box beside Save shows
+  the same rig as text.
+- Edits survive switching views: leaving a view first
+  syncs its edits into the view's definition. Undo can
+  restore a deleted point or part. Labels and
+  descriptions ride the GLB extras both ways - a renamed
+  or described point reopens with its words.
+
+Proof: Harness_V17.JS drives the built page in headless
+Chromium - 34 checks, all passing, no page exceptions.
+The standing checks (the tested-range feature among
+them), the single-image flow (add two points with custom
+labels, move one, save, reload - both present), and the
+GLB flow on the real Human_Man_Paper.GLB: 16 Front parts
+shown; a pin dragged and moved; a bare point added,
+renamed, described; a connect-drag growing a connected
+point with the band shown and the wire drawn; two
+existing points connected by press-drag; a point and a
+part deleted with their children re-parented; a view
+switch and back with every edit intact; then the saved
+GLB parsed on its own - binary chunk byte-identical,
+81 nodes less the deleted part and its back picture
+plus the one born point makes 80, the moved pin, the
+re-parented foot, the new node's label, description,
+parent and pin all in the extras, untouched views
+unchanged - and the saved file reopened in the editor
+with every edit simply there. A real mouse press and
+drag in the 3D view selects a point and its drag is
+written back into the file the same way. Element census:
+nothing lost from V16, one addition (saveGlbBtn).
+
+Two honest notes. The 3D view's points are placed by a
+harvest that maps each pin through its node's world
+transform; in GLBs whose pages are offset inside the
+geometry instead of by node transforms (the Human Man
+is one), the 3D points gather over the middle page
+instead of sitting on their own pages - a V16-era
+placement flaw, unchanged here; the write-back is exact
+either way, so a dragged point returns to the same
+place it was dragged to. And the 2D stage still opens
+with the picture offset toward the top-left by the
+long-standing view math - unchanged in V17; Solomon
+pans it into place as he always has.
+
+Local build only - not pushed, awaiting Solomon's word
+like V16 before it.
