@@ -1,0 +1,84 @@
+Model Editor V18 - what changed (2026-11-15, the two
+follow-ons closed)
+
+V17's spec ended with two honest notes - faults the run
+observed and deliberately left. V18 closes both, each
+reproduced headless first, each fixed by rewriting the
+whole section another way (never patched over).
+
+FAULT 1 - 3D points gathered over the middle page.
+Reproduced on V17 with the real Human_Man_Paper.GLB:
+0 of 16 Front points and 0 of 10 Side points sat inside
+their own page's geometry bounds (the Front page spans
+x -3.3..-1.3, the Side page x 1.3..3.3; the Front foot
+sphere sat at x 0.199, the Side thigh at x -0.031 -
+over the middle page). Root cause, one line: the
+harvest mapped every pin onto an assumed [-1, 1] local
+page quad, but page-offset GLBs bake each page's real
+rectangle into the geometry under identity node
+transforms, so localToWorld left every pin in the same
+[-1, 1] world strip. The write-back was the same
+assumed quad run backwards, which is why it stayed
+exact. The harvest is rewritten whole: each page is
+measured before any point is placed - a pin is a
+fraction of the 2048 canvas and lands at the same
+fraction across its own page's rectangle, read from
+the page geometry's bounding box, carried by the
+node's world transform as before. The rectangle is
+stored beside the node, and the write-back is
+rewritten with it: the dragged position rides the
+node's world transform home, then divides by the very
+same rectangle, so the pair stays exact inverses on
+every page.
+
+FAULT 2 - the 2D stage opened shifted top-left.
+Reproduced on V17: on a fresh open, image mode and GLB
+Front view alike, the stage centre sat (-552, -552) px
+from the wrap centre on a 1252x963 wrap. Root cause,
+one line: applyView centred the stage with a -50%
+translate taken on the unscaled 2048px box while the
+scale shrank the box about its top-left origin, so the
+fixed -1024px shift overshot by 1024 x (1 - SCALE) -
+exactly the measured 552px. The view section is
+rewritten whole: placement is arithmetic on the scaled
+stage (half the scaled size, plus the pan), so the
+picture's centre sits at the wrap's centre plus the
+pan at any zoom; and opening a picture or a view goes
+through a new opening path that clears the pan and
+zoom the last picture was left at and fits, so every
+fresh open starts centred at fit zoom - image mode and
+every GLB view. fit() itself still only measures, so a
+window resize keeps its pan; panning still moves one
+screen pixel per unit and the wheel still multiplies
+the zoom as they always have.
+
+Proof: Harness_V18.JS drives the built page in headless
+Chromium - 39 checks, all passing, no page exceptions.
+Every V17 check passes as it did (34 of 34, including
+the full GLB round-trip on the real Human_Man_Paper.GLB
+and the 3D drag write-back). The new checks: A4, C3c
+and C10b measure a freshly opened image, GLB Front
+view and GLB Back view centred within 4 px of the wrap
+centre at fit zoom; E1 measures all 26 Front and Side
+spheres through the point card and finds every one
+inside its own page's geometry bounds; E2 drags the
+Front head-eyes point with a real mouse press and
+finds the saved pin equal to the dragged world place
+divided back through the same page rectangle (within
+2 px - the point card reads to 3 decimals and the save
+rounds pins to whole pixels). Element census: nothing
+lost from V17, nothing added - the same 66 ids.
+
+Two honest notes about the proof run itself: the
+harness's first E1 attempt measured nothing because it
+read the point list before the rows were built (the
+readiness wait now requires the rows), and its second
+attempt read every position as null because the
+measuring regex lost its backslashes inside the eval
+string (fixed in the harness; the editor was never at
+fault either time - the same measurements, taken by a
+standalone probe, already showed the Front foot at
+x -2.101, on its own page).
+
+Local build only - not pushed, awaiting Solomon's word
+like V16 and V17 before it.
