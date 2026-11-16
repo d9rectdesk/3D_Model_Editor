@@ -33,3 +33,7 @@ The human man in this repository is a complete paper character: front, back, and
 ## Asking for features
 
 Feature requests live in this repository's Issues, each written in plain language with the enhancement label.
+
+## License
+
+3D Model Editor is open source under the MIT License — see the LICENSE file. Anyone may use, copy, modify, and share it, including for commercial purposes, as long as the copyright notice stays with it.
