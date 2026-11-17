@@ -1,0 +1,9 @@
+{
+  "name": "rw02-stretchy-mesh",
+  "private": true,
+  "type": "module",
+  "description": "Manifest for the staged Stretchy Studio mesh part (RW-02): delaunator is the part's one named dependency, at the version the source project pins. Duke - original manifest.",
+  "dependencies": {
+    "delaunator": "^5.1.0"
+  }
+}
