@@ -1,0 +1,73 @@
+STAGING NOTE - RW-02
+Staged: 2026-11-16
+Product served: Model Editor (next version) and Paper Creator -
+the part-mesh step of the 2D layered-rig route.
+Queue entry: RW-02 Stretchy Studio mesh generation: a part
+layer's silhouette becomes a triangulated deformation mesh.
+MIT.
+
+WHAT IS HERE
+The complete src/mesh module set from the project
+MangoLion/stretchystudio, commit
+24a83a27ba43e43e9d2e3de5e33994594e6199c2:
+- src/mesh/contour.js - alpha mask dilation, contour tracing,
+  resampling and smoothing.
+- src/mesh/sample.js - interior point sampling.
+- src/mesh/delaunay.js - triangulation over the delaunator
+  library.
+- src/mesh/generate.js - the orchestrator: image data in,
+  {vertices, uvs, triangles, edgeIndices} out, plus
+  retriangulate for re-meshing after vertex edits.
+- src/mesh/worker.js - the Web Worker wrapper.
+- LICENSE - the project's own MIT licence file.
+- package.json at this folder's root - the part manifest
+  (Duke, original): names the one dependency at the version
+  the source project pins.
+- Proof_V1 - the harness, its run script, and the proof log.
+
+LICENCE
+MIT, Copyright (c) 2026 Nguyen Phan. Verified first-hand from
+the project's own LICENSE file before staging; the full text
+is staged at LICENSE and travels with the part. The project's
+bundled sample art is not part of this staging - code only.
+
+WHAT IT DOES FOR THE RIG WORK
+On the 2D route each full part layer needs a mesh before it
+can bend or be posed: this module traces the part's own
+silhouette (dilated 2 px so mesh edges land just outside the
+artwork, where the texture's own alpha clips them) and
+triangulates it. It is a pure module set - no DOM, no
+globals - designed by its author to run on the main thread
+or in a worker, which is how the editor will call it.
+
+SOURCE MARKS AND THE ONLY CHANGES FROM THE ORIGINAL FILES
+Every staged JavaScript file carries a 7-line source-mark
+header naming what the part does, its source project, its
+licence, and its exact origin (project, file path, commit).
+Apart from that header there are NO changes - proven by the
+literal copy check in Proof_V1/Proof_Log_V1.TXT (5/5 MATCH).
+No names or variables were changed.
+
+DEPENDENCIES (the full set the part needs to stand)
+- delaunator ^5.1.0 (the version the source project pins;
+  ISC licence, Copyright Mapbox) - named in package.json and
+  installed by Proof_V1/Run_Proof_V1.sh; it is a named
+  dependency, not copied code.
+- Runtime: a JavaScript runtime with ES modules (browser or
+  Node as in the proof).
+
+PROOF
+Harness on the staged copy: a synthetic L-shaped silhouette
+(an arm-like rigid part, 120x80) through generateMesh -
+coverage of the silhouette's opaque pixels 3264/3264 =
+100.00%, 60 edge vertices, all indices and UVs in range;
+retriangulate reproduces a working mesh - HARNESS PASS
+(full numbers in Proof_V1/Proof_Log_V1.TXT).
+Review gate over every staged code file: see the wiring
+plan for the gate record of this staging run.
+
+STANDING CAVEAT
+The source project is young (created 2026-04, no releases
+yet). The staged module set is small, pure, and proven here
+standalone; if it ever misbehaves in the editor, the step it
+serves is one function call wide and can be re-pointed.
