@@ -1,0 +1,16 @@
+RW-01 PROOF RUN - staged copy, 2026-11-17T01:19:58Z
+
+up to date in 3s
+DragonBones: 5.7.000
+Website: http://www.loongbones.app/
+Source and Demo: https://github.com/DragonBones/
+rest: elbow global x=100.000 y=0.000 rotation=0.0000
+posed: elbow matrix a=-0.000 b=1.000 c=-1.000 d=-0.000 tx=-0.000 ty=100.000
+posed: slot global x=-0.000 y=100.000 rotation=-4.7124
+HARNESS PASS
+exit=0
+
+LITERAL COPY CHECK (staged file minus its 7-line source-mark header vs the original at the recorded commit, with the documented comment-word change applied to the original for RW-01):
+STAGED /home/hatch/workspace/Parts_Library_V1/Model_Editor/RW01_DragonBones_Core_V1
+files: 37 comment-word changes: 24
+literal copy check: 37/37 MATCH
