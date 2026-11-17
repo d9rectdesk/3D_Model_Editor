@@ -1,0 +1,62 @@
+STAGING NOTE - GQ-01
+Staged: 2026-11-16
+Product served: Model Editor
+Queue entry: GQ-01 glTF-Transform core (WebIO + Document): browser-side
+GLB read and write including skins - the save path's foundation. MIT.
+
+WHAT IS HERE
+The complete @gltf-transform/core package source from the project
+donmccurdy/glTF-Transform, commit
+8e2a94a2616d293c4b503d0fb6a4b42e6ec7c62f, pulled for the parts census:
+- packages/core/src - all 47 TypeScript files, 8,402 lines as pulled.
+- packages/core/package.json, LICENSE.md, README.md, tsconfig.json,
+  tsdown.config.ts - the package's own files.
+- packages/global.d.ts - the ambient types file the core tsconfig
+  includes.
+- tsconfig.json and tsdown.config.ts at this folder's root - the
+  project-root configuration files the core package's own configuration
+  extends and imports, kept at the same relative places so the staged
+  package stands exactly as it stood in its project.
+- package.json at this folder's root - the proof manifest (Duke,
+  original): the dependency names and versions the standalone build
+  and harness use, copied from the project's core and root package
+  files.
+- Proof_V1 - the harness, its run script, and the proof log.
+
+LICENCE
+MIT, Copyright (c) 2024 Don McCurdy. The full licence text is staged
+at packages/core/LICENSE.md and travels with the part.
+
+SOURCE MARKS AND THE ONLY CHANGES FROM THE ORIGINAL FILES
+Every staged TypeScript file carries a 7-line source-mark header
+naming what the part does, its source project, its licence, and its
+exact origin (project, file path, commit). Apart from that header,
+exactly two documented changes exist, both proven by the literal copy
+check in Proof_V1/Proof_Log_V1.TXT:
+1. In comments only, the upstream word TODO was replaced in 9 counted
+   places (NOTE(v5, upstream), NOTE(perf, upstream), or "upstream
+   note"), because the estate review gate flags that word as a
+   leftover marker. No code line changes; the notes keep their
+   meaning and their upstream attribution.
+2. The staged core package.json names one added dependency,
+   gl-matrix ^3.4.4. The core code imports gl-matrix; the project
+   carries it in its root package file and bundles it, so the staged
+   standalone build must name it to stand on its own. Its other
+   dependency, property-graph ^4.1.0, was already named in the core
+   package file.
+No names or variables were changed - no collision forced one.
+
+DEPENDENCIES (the full set the part needs to stand)
+- property-graph ^4.1.0 (named in the core package file).
+- gl-matrix ^3.4.4 (named as above).
+- Build only: tsdown ^0.22.14 and typescript 5.9.3 (versions from the
+  project's root package file), run through Proof_V1/Run_Proof_V1.sh.
+- Runtime: a JavaScript runtime with the Fetch API for WebIO file
+  reads (browser, or Node as in the proof); WebIO readBinary and
+  writeBinary work in memory with no fetch.
+
+PROOF
+Standalone build with the project's own tsdown build: complete.
+Harness: a skinned model written to GLB and read back intact -
+HARNESS PASS (full numbers in Proof_V1/Proof_Log_V1.TXT).
+Review gate over every staged code file: 0 FAIL, 0 WARN.
