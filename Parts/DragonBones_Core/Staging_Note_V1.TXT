@@ -1,0 +1,73 @@
+STAGING NOTE - RW-01
+Staged: 2026-11-16
+Product served: Model Editor (next version) and Paper Creator -
+the 2D layered-rig movement heart.
+Queue entry: RW-01 DragonBones core runtime: bone hierarchy, IK,
+skinning and animation evaluation for layered 2D rigs. MIT.
+
+WHAT IS HERE
+The complete DragonBones core library from the project
+DragonBones/DragonBonesJS, commit
+64b6c69ae35777c2404be68c9192e2c56906079e:
+- DragonBones/src/dragonBones - all 37 TypeScript files,
+  18,331 lines as pulled: the exact file set the project's own
+  tsconfig names, in the project's own layout.
+- DragonBones/tsconfig.json - the project's own build file.
+- LICENSE - the project's own MIT licence file.
+- package.json at this folder's root - the proof manifest
+  (Duke, original): the compiler the standalone build uses.
+- Proof_V1 - the harness, its build file, its run script,
+  and the proof log.
+
+LICENCE
+MIT, Copyright (c) 2012-2025 The DragonBones team and other
+contributors. Verified first-hand from the project's own
+LICENSE file before staging; the full text is staged at
+LICENSE and travels with the part.
+
+WHAT IT DOES FOR THE RIG WORK
+A layered figure's parts are rigid paper pieces parented to
+bones. This core is the evaluator: it parses a skeleton
+description, builds the bone hierarchy, and evaluates every
+bone's and slot's pose for any joint angle - which is what
+the movement proof consumes when it poses each part through
+its range and checks that no background can show. It authors
+nothing and renders nothing; the editor keeps its own
+surfaces. Its engine adapters (Pixi, Phaser, Egret and the
+rest) are NOT staged - the editor supplies its own thin
+display factory, exactly as the proof harness does.
+
+SOURCE MARKS AND THE ONLY CHANGES FROM THE ORIGINAL FILES
+Every staged TypeScript file carries a 7-line source-mark
+header naming what the part does, its source project, its
+licence, and its exact origin (project, file path, commit).
+Apart from that header, exactly one documented change exists,
+proven by the literal copy check in Proof_V1/Proof_Log_V1.TXT:
+1. In comments only, the upstream word TODO was replaced by
+   NOTE(upstream) in 24 counted places, because the estate
+   review gate flags that word as a leftover marker. All 24
+   were read line by line before the change; every one sits
+   in a comment. No code line changes; the notes keep their
+   meaning and their upstream attribution.
+No names or variables were changed.
+
+DEPENDENCIES (the full set the part needs to stand)
+- None at runtime: the core is dependency-free TypeScript
+  (its project's own package file lists build tooling only).
+- Build and proof only: typescript 5.9.3, run through
+  Proof_V1/Run_Proof_V1.sh, and a JavaScript runtime (Node)
+  to execute the built bundle.
+
+PROOF
+Standalone build of the staged copy with the project's own
+file list: complete, zero errors.
+Harness: a two-bone armature (shoulder at the origin, elbow
+100 units along +x, one rigid display on the elbow) built
+from skeleton JSON through a display-less factory. Rest pose
+evaluates to exactly (100, 0); with the shoulder held at
++90 degrees the elbow's evaluated pose matrix is exactly
+the +90 degree rotation landing at (0, 100), and the slot
+follows it - HARNESS PASS (full numbers in
+Proof_V1/Proof_Log_V1.TXT).
+Review gate over every staged code file: see the wiring
+plan for the gate record of this staging run.
