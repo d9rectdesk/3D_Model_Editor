@@ -1,0 +1,21 @@
+The open plugin point
+=====================
+
+The Model Editor has one open plugin point. In the editor's
+Settings it appears as two fields: "Plugin point - endpoint"
+and "Plugin point - model".
+
+A plugin connected at that point can lend the editor a local
+language model's help for word-driven work - for example,
+turning a short description into a plan for a model, or
+judging a finished result. No language model is built into
+the editor: the plugin point does nothing until a plugin is
+connected there, and the editor's model-editing features all
+work without one.
+
+The editor's author keeps a private plugin of his own for
+this point; it is not included in this repository and is not
+needed to use the editor. The point is deliberately left
+open, in the editor's own code, so that anyone can build
+their own plugin against it and connect a language model
+running on their own machine.
