@@ -1,0 +1,13 @@
+RW-02 PROOF RUN - staged copy, 2026-11-17T01:20:52Z
+
+up to date in 4s
+vertices=75 triangles=107 edgeVertices=60
+coverage: 3264/3264 = 100.00%
+retriangulated triangles=107
+HARNESS PASS
+exit=0
+
+LITERAL COPY CHECK (staged file minus its 7-line source-mark header vs the original at the recorded commit):
+STAGED /home/hatch/workspace/Parts_Library_V1/Model_Editor/RW02_Stretchy_Mesh_V1
+files: 5 comment-word changes: 0
+literal copy check: 5/5 MATCH
