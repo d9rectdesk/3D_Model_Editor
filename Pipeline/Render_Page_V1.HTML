@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Model Editor Pipeline Render Page V1</title>
+<style>html,body{margin:0;padding:0;background:transparent}canvas{display:block}</style>
+<script type="importmap">
+{"imports": {
+  "three": "__VENDOR_URL__/three.module.js",
+  "three/addons/": "__VENDOR_URL__/"
+}}
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+window.__ready = false;
+window.__error = "";
+const POSE = __POSE_JSON__;
+const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, 0.01, 20);
+
+new GLTFLoader().load("__GLB_URL__", (gltf) => {
+  scene.add(gltf.scene);
+  if (POSE) {
+    const byKey = {};
+    gltf.scene.traverse((n) => {
+      if (n.userData && n.userData.view) byKey[n.userData.view + "|" + n.userData.part] = n;
+    });
+    const affected = new Set([POSE.part]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      gltf.scene.traverse((n) => {
+        const u = n.userData || {};
+        if (u.view === POSE.view && u.parent && affected.has(u.parent) && !affected.has(u.part)) {
+          affected.add(u.part); grew = true;
+        }
+      });
+    }
+    const pivot = new THREE.Vector3(POSE.pin[0] / 1024 - 1, 1 - POSE.pin[1] / 1024, 0);
+    const axis = (POSE.view === "Front" || POSE.view === "Back")
+      ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(1, 0, 0);
+    const rot = new THREE.Matrix4().makeRotationAxis(axis, POSE.angle_degrees * Math.PI / 180);
+    const toPivot = new THREE.Matrix4().makeTranslation(pivot.x, pivot.y, pivot.z);
+    const fromPivot = new THREE.Matrix4().makeTranslation(-pivot.x, -pivot.y, -pivot.z);
+    const full = toPivot.multiply(rot).multiply(fromPivot);
+    affected.forEach((part) => {
+      const node = byKey[POSE.view + "|" + part];
+      if (node) { node.matrixAutoUpdate = false; node.matrix.copy(full); }
+    });
+    window.__posed_parts = affected.size;
+  }
+  window.__ready = true;
+}, undefined, (err) => { window.__error = String(err && err.message || err); });
+
+window.__render = (dir) => {
+  if (dir === "Front") camera.position.set(0, 0, 3);
+  else if (dir === "Back") camera.position.set(0, 0, -3);
+  else if (dir === "Right") camera.position.set(-3, 0, 0);
+  else if (dir === "Left") camera.position.set(3, 0, 0);
+  camera.lookAt(0, 0, 0);
+  camera.up.set(0, 1, 0);
+  if (dir === "Back") camera.up.set(0, 1, 0);
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL("image/png").split(",")[1];
+};
+</script>
+</body>
+</html>
