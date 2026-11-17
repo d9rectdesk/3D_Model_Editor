@@ -1,0 +1,61 @@
+NOTICES - third-party parts in this repository
+==============================================
+
+Everything in this repository is the author's own work under
+the MIT License (see LICENSE), except the third-party parts
+listed below. Each included part keeps its own licence text
+in its own folder, as its licence requires.
+
+INCLUDED IN THIS REPOSITORY
+---------------------------
+
+1. glTF-Transform core - Parts/glTF_Transform_Core/
+   Author: Don McCurdy and contributors.
+   Project: glTF-Transform (github.com/donmccurdy/glTF-Transform),
+   commit 8e2a94a2616d293c4b503d0fb6a4b42e6ec7c62f.
+   Licence: MIT License, Copyright (c) 2024 Don McCurdy.
+   Licence text: Parts/glTF_Transform_Core/packages/core/LICENSE.md.
+   What it does here: reads and writes GLB models, including
+   skins - the editor's save path and model loading stand on it.
+   Its own dependencies, named in its package file and fetched
+   by the build (not copied into this repository):
+   property-graph (MIT) and gl-matrix (MIT).
+
+2. DragonBones core - Parts/DragonBones_Core/
+   Author: The DragonBones team and other contributors.
+   Project: DragonBonesJS (github.com/DragonBones/DragonBonesJS),
+   commit 64b6c69ae35777c2404be68c9192e2c56906079e.
+   Licence: MIT License, Copyright (c) 2012-2025 The
+   DragonBones team and other contributors.
+   Licence text: Parts/DragonBones_Core/LICENSE.
+   What it does here: evaluates layered 2D rigs - bone
+   hierarchy, inverse kinematics, skinning, and animation -
+   so a paper figure's parts can be posed and checked.
+   Its build tool, TypeScript (Apache License 2.0), is
+   installed by its proof script; it is not copied into this
+   repository.
+
+3. Stretchy Studio mesh modules - Parts/Stretchy_Mesh/
+   Author: Nguyen Phan.
+   Project: stretchystudio (github.com/MangoLion/stretchystudio),
+   commit 24a83a27ba43e43e9d2e3de5e33994594e6199c2.
+   Licence: MIT License, Copyright (c) 2026 Nguyen Phan.
+   Licence text: Parts/Stretchy_Mesh/LICENSE.
+   What it does here: turns a part layer's silhouette into a
+   triangulated mesh so the part can bend.
+   Its one dependency, named in its package file and fetched
+   by the build (not copied into this repository):
+   delaunator - ISC License, Copyright (c) Mapbox. Delaunator
+   in turn uses robust-predicates, released into the public
+   domain (The Unlicense).
+
+USED BY LINK, NOT INCLUDED
+--------------------------
+The pipeline calls these whole projects on the machine it
+runs on; they are not copied into this repository.
+- TripoSR - MIT License - the image-to-3D tool.
+- BiRefNet, through rembg - MIT License - the cutout tool.
+- three.js - MIT License - the 3D renderer.
+
+No part of this repository is under the GPL, and no part
+carries a non-commercial term.
