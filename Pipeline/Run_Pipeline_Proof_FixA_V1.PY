@@ -2,7 +2,7 @@
 # Model Editor V20, Fix A proof driver. Restarts
 # Bridge_Server_V1.PY on the final code and talks
 # to it by HTTP only:
-#   /status lists 11 steps;
+#   /status lists the 13 named steps;
 #   an OPTIONS preflight returns 204 with the CORS
 #   headers, and a GET /status sent with an Origin
 #   header carries Access-Control-Allow-Origin
@@ -129,8 +129,33 @@ def Main():
                 time.sleep(0.5)
         Checks = Transcript["checks"]
         Checks["status"] = Status
-        Checks["status_steps_11"] = bool(
-            Status and len(Status.get("steps", [])) == 11)
+        # Status step check, rewritten whole
+        # 2026-11-17 under the rewrite rule: the
+        # old check counted 11 steps and passed
+        # on any 11 names.
+        # This check names the 13 steps the
+        # V22 bridge must list.
+        # It compares the returned set to that
+        # named set exactly.
+        # A step added, removed, or renamed
+        # therefore fails the check.
+        # The named set is explicit, not derived
+        # from the bridge itself.
+        # A derived set would match whatever
+        # the bridge lists and never fail.
+        # Source: Pipeline_Steps_V1.PY STEPS
+        # dict (Original work - Kevin), read
+        # first-hand 2026-11-17, 13 entries.
+        Expected_Steps = {
+            "detail", "detect_views", "make3d",
+            "make_3d", "make_paper", "model_down",
+            "model_up", "movement_reference",
+            "redraw", "rig", "slice_layers",
+            "snapshots", "torrent"}
+        Returned_Steps = set(
+            (Status or {}).get("steps", []))
+        Checks["status_steps_13"] = bool(
+            Status and Returned_Steps == Expected_Steps)
         print("status: " + json.dumps(Status), flush=True)
 
         # CORS preflight: OPTIONS answers 204 with
@@ -256,7 +281,7 @@ def Main():
               flush=True)
 
         Checks["all_pass"] = bool(
-            Checks["status_steps_11"]
+            Checks["status_steps_13"]
             and Checks["options_204_with_cors"]
             and Checks["cors_on_success_and_error"]
             and Checks["make3d_images_pass"]
