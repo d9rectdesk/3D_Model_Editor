@@ -1,0 +1,38 @@
+GQ-01 STANDALONE PROOF LOG
+Run date: 2026-11-16 (America/New_York)
+Run by: the graft queue worker, on Duke's machine, Node v24.22.1, npm 10.9.4.
+
+BUILD (the project's own tsdown build, staged tsdown configuration,
+PACKAGE_VERSION=4.5.1 from the staged core package.json):
+Build complete - ESM dist/index.js 202.24 kB, CJS dist/index.cjs, type
+declarations dist/index.d.ts. No build errors.
+
+HARNESS (Proof_V1/Harness_V1.js, run against the built dist):
+VERSION: v4.5.1
+GLB written: 1360 bytes, magic glTF, header length matches
+Round trip: scenes=1 meshes=1 skins=1 joints=3 positions=0,0,0,1,0,0,0,1,0
+HARNESS PASS
+
+What the harness did: built a Document holding one scene, one triangle
+mesh (POSITION, JOINTS_0, WEIGHTS_0), and one skin with three joint
+nodes and inverse bind matrices; wrote it to a binary GLB with WebIO;
+read the GLB back with WebIO; checked the scene, mesh, skin, its three
+joints, the skin name, the armature node's skin, and the exact vertex
+positions all survived.
+
+LITERAL COPY CHECK (Verify_GQ01_Literal_V1.py, kept with the goal's
+working files): all 50 staged TypeScript files byte-compare equal to
+the pulled originals after removing the 7-line source-mark header and
+reversing the counted comment-word change; the non-TypeScript copies
+are byte-identical, and the core package.json is identical apart from
+the one added gl-matrix dependency line.
+TypeScript files checked: 50; mismatches: 0.
+
+REVIEW GATE (Review_Check.py over every staged code file - the 50
+TypeScript files plus the harness and its run script):
+0 FAIL, 0 WARN.
+
+CLEANUP AFTER PROOF: node_modules, package-lock.json, and the built
+packages/core/dist folder were removed from the staged part after this
+proof was recorded. Proof_V1/Run_Proof_V1.sh rebuilds all three and
+reruns the harness from a clean state.
