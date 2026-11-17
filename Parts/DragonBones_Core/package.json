@@ -1,0 +1,8 @@
+{
+  "name": "rw01-dragonbones-core-proof",
+  "private": true,
+  "description": "Proof manifest for the staged DragonBones core part (RW-01): the TypeScript compiler version the standalone build uses. Duke - original manifest.",
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
