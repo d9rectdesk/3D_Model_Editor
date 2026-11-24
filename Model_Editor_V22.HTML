@@ -84,6 +84,12 @@
   #gl3d { position: absolute; inset: 0; display: none; touch-action: none; }
   #gl3d canvas { display: block; touch-action: none; }
   .small { font-size: 11px; color: var(--muted); }
+  #aiTabBar { display: flex; gap: 6px; margin: 12px 0 0; }
+  #aiTabBar button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #aiTabPanel { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin: 6px 0; }
+  #aiTabTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+  #aiTabTable th, #aiTabTable td { border-top: 1px solid var(--line); padding: 4px; text-align: left; vertical-align: top; }
+  .aiTabOut { width: 100%; background: var(--field); color: var(--text); border: 1px solid var(--field-border); border-radius: 6px; font-size: 12px; }
   .pageRow { display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 6px; }
   .pageRow:hover { background: var(--hover); }
   .pageRow .nm { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -273,18 +279,40 @@
   <div id="modelsList"></div>
   <div class="row"><button id="modelsCheckBtn">Check the files again</button></div>
   </div>
+  <h2>Alongside</h2>
+  <p class="hint">Loading a GLB here never replaces what is open: an added model stands alongside the open model in the 3D view, placed the way rig points are placed - drag it in the view, or set its position here and move it - and its own X and Y directions can be changed for that object alone. Save the combined models writes one new GLB holding the open model and every alongside model as placed; an alongside add, move or remap never writes the open model itself.</p>
+  <div id="alongsideSection">
+  <div id="alongsideList"></div>
+  <div class="row"><button id="alongsideAddBtn">Add a model alongside</button><input type="file" id="alongsideFile" accept=".glb" style="display:none"></div>
+  <div class="row"><label>Model</label><select id="alongsideObj" style="flex:1"></select></div>
+  <div class="row"><label>X</label><input type="number" id="alongsideX" step="0.1" value="0"><label>Y</label><input type="number" id="alongsideY" step="0.1" value="0"><label>Z</label><input type="number" id="alongsideZ" step="0.1" value="0"><button id="alongsideMoveBtn">Move the selected model</button></div>
+  <div class="row"><label>New X from</label><select id="alongsideXFrom"><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option></select><label>New Y from</label><select id="alongsideYFrom"><option value="X">X</option><option value="Y" selected>Y</option><option value="Z">Z</option></select><button id="alongsideRemapBtn">Remap the axes</button></div>
+  <div class="row"><button id="alongsideSaveBtn">Save the combined models</button></div>
+  <div class="small" id="alongsideStatus">no model alongside yet</div>
+  </div>
   <h2>Detail</h2>
-  <p class="hint">Set the open model's triangle count on the slider and apply: the detail step rewrites the model's geometry to that count through the bridge and the editor reloads the result. More detailed raises the slider's top and the knob by 1.5 times and runs the step at the new count. The step carries geometry and vertex colours only - it does not carry skinning, animation or textures, so a skinned model is refused with the reason in the log, never silently stripped.</p>
+  <p class="hint">Set the model's triangle count on the slider and apply: the slider total is the whole-model budget - the detail step splits it across the model's parts (GLB mesh names), refines each part to its share, and the editor reloads the result and reads the parts back summed against the budget. A detail map written in the AI tab Detail row's gate field (one part per line, Name: weight, or JSON) directs the growth onto the named parts only. More detailed raises the slider's top and the knob by 1.5 times and runs the step at the new count. The step carries geometry and vertex colours only - it does not carry skinning, animation or textures, so a skinned model is refused with the reason in the log, never silently stripped.</p>
   <div id="detailSection">
   <div class="row"><label>Triangles</label><input type="range" id="triSlider" min="100" max="1000" step="1" value="1000"><span class="deg" id="triValue">1,000</span></div>
   <div class="row"><button id="moreDetailed">More detailed</button><button id="detailApply" data-ai-step="detail">Apply detail</button></div>
   <div class="small" id="detailStatus">no model yet</div>
+  <div class="small" id="detailParts">parts: -</div>
   </div>
   <h2>Sections</h2>
-  <p class="hint">Heavy operations run by torrent sections: the operation runs section by section over the open model, then the stitch pass runs over the whole model. The stitch line below shows the verdict from the step report - seam mismatches counted, the watertight verdict, and the triangle count against the slider target. An operation is not counted done until the stitch pass says so. Until the plugin judging half wires in (Bit 7), the deterministic stitch numbers alone gate the operation. The step carries geometry and vertex colours only - it does not carry skinning, animation or textures, so a skinned model is refused with the reason in the log, never silently stripped.</p>
+  <p class="hint">Heavy operations run by torrent sections: the operation runs section by section over the open model, then the stitch pass runs over the whole model. The stitch line below shows the verdict from the step report - seam mismatches counted, the watertight verdict, and the triangle count against the slider target. An operation is not counted done until the stitch pass says so. When a plugin is connected, a finished operation's stitch report and rendered views then go to the plugin judge, completing the final pass; with no plugin connected, the deterministic stitch numbers alone gate the operation. The step carries geometry and vertex colours only - it does not carry skinning, animation or textures, so a skinned model is refused with the reason in the log, never silently stripped.</p>
   <div id="sectionsSection">
   <div class="row"><label>Sections</label><input type="number" id="sectionCount" min="1" max="64" value="6"><label>Operation</label><select id="torrentOperation"><option value="wave">Wave</option><option value="scale">Scale</option><option value="rotate">Rotate</option><option value="translate">Translate</option></select><button id="runSections" data-ai-step="torrent">Run sections</button></div>
   <div class="small" id="stitchStatus">Stitch: -</div>
+  </div>
+  <h2>Brushes</h2>
+  <p class="hint">Paint, erase and sculpt the open 3D model: pick a mode, set the brush, then run the stroke - or pick the centre on the model in the 3D view first. Paint writes vertex colours inside the hardness falloff only, in the colour picked under Paint. Sculpt pushes or pulls along the surface normals and remeshes as it goes, and its result stands only when it validates watertight with no jagged edges. Erase restores from the pristine copy of the loaded GLB the editor keeps - only the vertices inside the brush come back, and edits outside the brush stand. A stroke runs as a bridge step on the model's GLB and the editor reloads the result; a large model routes through the torrent sections route and the stitch verdict rides on the status line. The step carries geometry and vertex colours only - it does not carry skinning, animation or textures, so a skinned model is refused with the reason in the log, never silently stripped.</p>
+  <div id="brushesSection">
+  <div class="row"><button data-brush-mode="paint" aria-pressed="true">Paint</button><button data-brush-mode="erase" aria-pressed="false">Erase</button><button data-brush-mode="sculpt" aria-pressed="false">Sculpt</button></div>
+  <div class="row"><label>Size</label><input type="range" id="brushSize" min="0.05" max="2" step="0.05" value="0.5"><label>Hardness</label><input type="range" id="brushHardness" min="0" max="1" step="0.05" value="0.35"></div>
+  <div class="row" id="strengthRow" style="display:none"><label>Strength</label><input type="range" id="brushStrength" min="0" max="1" step="0.05" value="0.3"><label>Direction</label><select id="brushDirection"><option value="push">Push</option><option value="pull">Pull</option></select></div>
+  <div class="row"><button id="brushPick">Pick centre on the model</button><button id="brushApply" data-ai-step="brush">Run the stroke</button></div>
+  <div class="small" id="brushCentre">Centre: the model's centre until you pick one</div>
+  <div class="small" id="brushStatus">no stroke yet</div>
   </div>
   <h2>Paint</h2>
   <p class="hint">Paint and sculpt the part shown in the 2D view - pick a part first. Paint colours it with the brush; sculpt pushes its silhouette in (left button) and pulls it out (right button), the Joint Placer's Edit mode adapted to the flat canvas. Edits mark the part dirty and flow into Save GLB like other edits.</p>
@@ -306,7 +334,7 @@
   <div class="row"><label>Pin X / Y</label><input type="number" id="fPinX" style="width:76px"><input type="number" id="fPinY" style="width:76px"></div>
   <div class="row"><label>Fill radius</label><input type="range" id="fRadius" min="10" max="600" step="1" value="0"><input type="number" id="fRadiusNum" min="4" max="1024" step="1" value="" title="Type an exact fill radius"><span class="deg" id="fRadiusVal"></span></div>
   <p class="hint">The orange circle around the picked point is the area the completion fills in around that joint. The slider sizes the circle for this point only - every point keeps its own radius - and dragging the point moves the circle's centre with it. Radii save into the GLB with the rig, and the Ai Redraw step fills to the radii set here.</p>
-  <div class="row"><label>Angle</label><input type="range" id="fAngle" min="-180" max="180" step="1" value="0"><input type="number" id="fAngleNum" class="angNum" min="-180" max="180" step="1" value="0" title="Type an exact angle"><span class="deg" id="fDeg">0°</span></div>
+  <div class="row"><label>Angle</label><input type="range" id="fAngle" min="-180" max="180" step="1" value="0"><input type="number" id="fAngleNum" class="angNum" min="-180" max="180" step="1" value="0" title="Type degrees, then press Enter"><span class="deg" id="fDeg">0°</span></div>
   <div class="row"><label>Limits</label><input type="number" id="fMin" style="width:64px" value="-180"><span>to</span><input type="number" id="fMax" style="width:64px" value="180"></div>
   <div class="row"><button id="blackBtn">Blacklist this angle</button></div>
   <div class="row"><label>Tested</label><span id="fTested">not tested yet</span></div>
@@ -333,9 +361,15 @@
   <div class="row"><button id="saveBtn">Save rig points</button><button id="finishBtn" class="on">Finish — full set</button></div>
   <textarea id="saveBox" readonly></textarea>
   <p class="hint">The saved file holds every point: its label, its description, its pin, what it connects to, its limits, its blacklisted angles, and its fill radius. Give that file back and the model gets built from it.</p>
+  <div id="aiTabBar" role="tablist" aria-label="Editor and AI tabs">
+    <button type="button" id="aiTabEditorBtn" role="tab" aria-selected="true">Editor</button>
+    <button type="button" id="aiTabBtn" role="tab" aria-selected="false" aria-controls="aiTabPanel">AI</button>
+  </div>
   <h2>Ai</h2>
+  <!-- PLUGIN POINT - left open on purpose for a third-party plugin that connects a local language model to the Ai input: expanding an emoji or description into an image prompt, planning an instruction into steps, and judging a finished operation. The plugin lives in its own private GitHub repository, d9rectdesk/Model_Editor_Describe_It_Plugin; nothing of it is in this page. The point loads a client file when one is configured in Settings (Plugin point - client file); the client shape is Describe_It_Client_V1.JS (health, expand, plan, judge). With no plugin connected, the Ai input behaves exactly as Version 21 left it, and nothing in this page claims otherwise. -->
   <p class="hint">The automatable steps, run from here or from the Ai menu. Cut, Split and Build the layered GLB run in this page on the PD_ pipeline; the rest call the local programs through the bridge (see Settings). Nothing works mute: settings, every step's params, the current step and results land in this log. The Ai inputs below feed the steps: the four pictures for Make the 3D model, and the Parts folder, Rig JSON and GLB file paths for the steps that read local files (the bridge runs on this machine, so paths are how it reads them). Each finished job's outputs are remembered in the page session and feed the next step. Where a 3D model exists, the offered order is 3D first: Make the 3D model, Snapshots, Slice, Redraw, Build the layered GLB, Rig it, then Make it paper or Make it 3D. Run the whole pipeline (below) runs every step in that order by itself; afterwards each step can be adjusted and re-run from that step.</p>
   <div class="row"><button id="aiBridgeBtn">Check the bridge</button><span class="small" id="aiBridgeState">bridge not checked yet</span></div>
+  <div class="row"><button id="aiPluginBtn">Check the plugin</button><span class="small" id="aiPluginState">no plugin connected</span></div>
   <div id="aiInputs">
     <div class="row"><label>Ai pictures</label><button id="aiPickBtn">Ai pictures — front, back, left side, right side, any order</button></div>
     <input type="file" id="aiPick" multiple accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" style="display:none">
@@ -343,6 +377,10 @@
     <div class="row"><label>Parts folder</label><input type="text" id="aiPartsFolder" style="flex:1" placeholder="Folder of parts the bridge steps read"></div>
     <div class="row"><label>Rig JSON</label><input type="text" id="aiRigJson" style="flex:1" placeholder="Path of the rig JSON file"></div>
     <div class="row"><label>GLB file</label><input type="text" id="aiGlbFile" style="flex:1" placeholder="Path of the GLB file the bridge steps read"></div>
+    <div class="row"><label>Ai text</label><input type="text" id="aiText" style="flex:1" placeholder="An emoji or a description, or an instruction like add wings. With no plugin connected, this runs as Version 21 left it."></div>
+    <div class="row"><button id="aiTextBtn">Send the Ai text</button><span class="small" id="aiTextState">no Ai text sent yet</span></div>
+    <div class="row" id="bit9Row"><button id="bit9EmojiBtn">Make 3D from an emoji</button><button id="bit9DescBtn">Make 3D from a description</button><span class="small" id="bit9State">no emoji or description run yet</span></div>
+    <div class="row"><span class="small">Emoji and description to 3D: an emoji in the Ai text is drawn with the device's own emoji font, cut out with BiRefNet through rembg (birefnet-general, with the pinned u2net session as the clean fallback; the paid BRIA session is never pinned), completed with any views the set does not hold, and made 3D. A description takes the same road through the editor's own picture-making, or through the plugin's expand first when a plugin is connected. Every model the chain makes lands in the Models list.</span></div>
   </div>
   <div id="aiSteps">
     <button class="aiStepBtn" data-ai-step="cut">Cut out the image</button>
@@ -361,10 +399,30 @@
   <div id="aiStepsPanel">
     <div class="aiStepRow"><span class="aiStepName">Make the 3D model</span><span class="aiStepState" id="aiState_make3d">not run yet</span><button class="aiRerunBtn" data-rerun="make3d">Re-run from here</button><div class="aiAdjust hint">Adjust: pick different pictures with the Ai pictures pick above, or change the 3D tool paths in Settings, then re-run from here.</div></div>
     <div class="aiStepRow"><span class="aiStepName">Snapshots of the 3D model</span><span class="aiStepState" id="aiState_snapshots">not run yet</span><button class="aiRerunBtn" data-rerun="snapshots">Re-run from here</button><div class="aiAdjust hint">Nothing adjustable for this step yet - it renders the 3D model from the four sides exactly as it stands.</div></div>
-    <div class="aiStepRow"><span class="aiStepName">Slice 3D into paper layers</span><span class="aiStepState" id="aiState_slice">not run yet</span><button class="aiRerunBtn" data-rerun="slice">Re-run from here</button><div class="aiAdjust hint">Adjust: the Rig JSON path in the Ai inputs names the rig the layers are sliced against, then re-run from here.</div></div>
+    <div class="aiStepRow"><span class="aiStepName">Slice 3D into paper layers</span><span class="aiStepState" id="aiState_slice">not run yet</span><button class="aiRerunBtn" data-rerun="slice">Re-run from here</button><div class="aiAdjust hint">Adjust: the Rig JSON path in the Ai inputs names the rig the layers are sliced against, then re-run from here. After slicing, the part layers are completed to full layers - every part carried past its joint into the next part, proven by the sweep at zero revealed background - and the completed set stands beside the sliced layers with its completion report in the run log.</div></div>
     <div class="aiStepRow"><span class="aiStepName">Redraw the parts</span><span class="aiStepState" id="aiState_redraw">not run yet</span><button class="aiRerunBtn" data-rerun="redraw">Re-run from here</button><div class="aiAdjust hint">Adjust: tune the fill radii on the rig points (Selected panel - Fill radius) and set the Reveal bitmaps folder in Settings, then re-run from here. A joint with a reveal bitmap fills from the bitmap; the rest fill from their radius.</div></div>
-    <div class="aiStepRow"><span class="aiStepName">Rig it</span><span class="aiStepState" id="aiState_rig">not run yet</span><button class="aiRerunBtn" data-rerun="rig">Re-run from here</button><div class="aiAdjust hint">Adjust: the Parts folder and Rig JSON paths in the Ai inputs, then re-run from here.</div></div>
-    <div class="aiStepRow"><span class="aiStepName">Make it paper</span><span class="aiStepState" id="aiState_make_paper">not run yet</span><button class="aiRerunBtn" data-rerun="make_paper">Re-run from here</button><div class="aiAdjust hint">Nothing adjustable for this step yet - it builds the paper GLB from the rig step's outputs exactly as they stand.</div></div>
+    <div class="aiStepRow"><span class="aiStepName">Rig it</span><span class="aiStepState" id="aiState_rig">not run yet</span><button class="aiRerunBtn" data-rerun="rig">Re-run from here</button><div class="aiAdjust hint">Adjust: the Parts folder and Rig JSON paths in the Ai inputs, then re-run from here. The rig step places every point at the centre of the overlap of the two parts it joins, and the placed rig stands beside the step's outputs; the input rig is never edited.</div></div>
+    <div class="aiStepRow"><span class="aiStepName">Make it paper</span><span class="aiStepState" id="aiState_make_paper">not run yet</span><button class="aiRerunBtn" data-rerun="make_paper">Re-run from here</button><div class="aiAdjust hint">Nothing adjustable for this step yet - it completes the parts to full layers first (every part carried past its joint into the next part, proven by the sweep at zero revealed background, the completion report in the run log), then builds the paper GLB from the completed layers.</div></div>
+    <div class="aiStepRow"><span class="aiStepName">Wired rig</span><span class="aiStepState" id="aiState_wired_rig">not run yet</span><button class="aiStepBtn" data-ai-step="wired_rig">Run</button><div class="aiAdjust hint">Adjust: the Parts folder and Rig JSON paths in the Ai inputs, then run it. The wired rig step runs the 2D route whole: paper data comes from the 2D views themselves and a 3D build is never a required step; it completes the parts to full layers, places every point at the centre of the overlap of the two parts it joins, meshes every part, evaluates every pose, and the movement proof sweeps every joint through its range before the paper GLB is built.</div></div>
+  </div>
+  <div id="aiTabPanel" role="tabpanel" aria-label="AI tab" style="display:none">
+    <p class="hint">The AI tab: the full AI pipeline step table, wired at the plugin point (the Describe_It_Client_V1.JS shape, loaded through ME22_loadPluginClient). Each step names its model assignment; a model is wired only where the wiring stays fluid and holds quality and accuracy, and where it does not, that step runs on Glimmer alone, Glimmer being the standing fallback and judge.</p>
+    <div class="small" id="aiTabNoModel">No model connected: no plugin is connected and no model is answering, so the AI tab claims nothing. The step table names each step model assignment as an assignment only; no step is claimed done, and no model is claimed to run any step in this state. Polish stands wired: its loop drives the detail step round over round; coloring stands wired to its color step.</div>
+    <div class="row"><label>Subject</label><input type="text" id="aiTabSubject" style="flex:1" placeholder="The named subject the parts listing works out"></div>
+    <div class="row"><label>Run mode</label><label><input type="radio" name="aiTabMode" id="aiTabModeAuto" value="full-auto" checked> Full auto</label><label><input type="radio" name="aiTabMode" id="aiTabModeStep" value="step-by-step"> Step by step</label><label><input type="radio" name="aiTabMode" id="aiTabModeManual" value="fully-manual"> Fully manual</label></div>
+    <p class="hint">Full auto: the models go through every step themselves, with the judge gates standing between steps and no word needed. Step by step: the AI stops after each step for your word - go on, edit, redo - before the next step runs. Fully manual: you do it yourself; every step is a tool you run by hand, and the tab runs no AI step by itself. The mode can be changed between steps.</p>
+    <div class="row"><button id="aiTabRunBtn" class="on">Run the AI tab pipeline</button><span class="small" id="aiTabRunState">not run yet</span></div>
+    <table id="aiTabTable">
+      <tr><th>Step</th><th>Model</th><th>State and manual gate</th></tr>
+      <tr data-ai-tab-step="parts"><td>1. Parts listing</td><td>Glimmer alone (fallback and judge)</td><td><span class="small" id="aiTabState_parts">not run yet</span><div class="small">Parts listing stands wired: a parts list written in the gate field (one part per line, or JSON) is parsed by the page parser and consumed first, and the parsed list drives one generation job per part in list order; with no parseable gate list, the plugin plan road answers when a plugin is connected; with neither, the row is not run and claims nothing.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_parts" class="aiTabOut" rows="2" aria-label="Parts listing output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="parts">Go on</button><button type="button" data-ai-tab-redo="parts">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="picture"><td>2. Generation - picture per part</td><td>Glimmer alone via expand (no other model is named for this step)</td><td><span class="small" id="aiTabState_picture">not run yet</span><div class="small">Generation stands wired: for each part in the parts list, in list order, one job runs the editor own picture-to-3D chain for that part against the subject (describe, cutout, completed views, 3D), landing Part_<Name>_V1.GLB - one run-log line per job, and a failed job stops the run at that part, named.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_picture" class="aiTabOut" rows="2" aria-label="Picture generation output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="picture">Go on</button><button type="button" data-ai-tab-redo="picture">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="make3d"><td>3. Generation - 3D per part</td><td>The editor own picture-to-3D tools - no language model for this step; judged by Glimmer where a judge is called</td><td><span class="small" id="aiTabState_make3d">not run yet</span><div class="small">Each part 3D lands through the same per-part generation jobs: if the picture row already ran them for the current parts list, this row reads the generation record back and no part is made twice; otherwise it runs the jobs itself. The whole-subject single make3d run is not used for a parts list.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_make3d" class="aiTabOut" rows="2" aria-label="3D generation output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="make3d">Go on</button><button type="button" data-ai-tab-redo="make3d">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="detail"><td>4. Detail</td><td>Glimmer alone (fallback and judge)</td><td><span class="small" id="aiTabState_detail">not run yet</span><div class="small">Detail intelligence stands: detail-aware refinement directed by this row. Write a detail map in the gate field (one part per line, Name: weight, or JSON) and the detail step consumes it - growth lands on the named parts only, and the slider total is the whole-model budget, split across the model's parts and read back summed, landing exactly on the budget where the budget parity allows a watertight landing. With no plugin connected the hand-written map is the direction and no judge verdict is claimed; where a plugin is connected, Glimmer judges the refined result through the plugin road.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_detail" class="aiTabOut" rows="2" aria-label="Detail output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="detail">Go on</button><button type="button" data-ai-tab-redo="detail">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="placement"><td>5. Placement</td><td>Glimmer alone (fallback and judge)</td><td><span class="small" id="aiTabState_placement">not run yet</span><div class="small">Placement stands wired: each generated part is fetched through the bridge file road, added on the Alongside machinery and moved to the target the Placement gate field names for it, and the combined save finishes the stage - its part names and size are read back into this gate field as the stage output. The machinery places each part exactly where it is told: the targets come from the gate field, written by hand or by a connected plan, and no language-model placement choice is claimed. No bridge step named place stands and the plan road still names place and skips it; this row is the tab road, not the plan road.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_placement" class="aiTabOut" rows="2" aria-label="Placement output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="placement">Go on</button><button type="button" data-ai-tab-redo="placement">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="rigging"><td>6. Rigging</td><td>Glimmer alone (fallback and judge)</td><td><span class="small" id="aiTabState_rigging">not run yet</span><div class="small">Rigging help stands wired beside the standing rig step, which stays untouched: from the placed parts bounding boxes in the combined model, each joint is computed at the overlap centre of the two joined parts boxes - the centre of the intersection box, or, where the boxes do not intersect, the midpoint of the closest faces - and written to the rig record (window.ME22_lastRig) and this gate field, one line per joint. The joint list comes from the placement gate field joint section; where it names none, each part after the first joins the first part, standing as its parent.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_rigging" class="aiTabOut" rows="2" aria-label="Rigging output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="rigging">Go on</button><button type="button" data-ai-tab-redo="rigging">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="coloring"><td>7. Coloring</td><td>Glimmer alone, as the coloring step judge</td><td><span class="small" id="aiTabState_coloring">not run yet</span><div class="small">Coloring stands wired: a color specification written in the gate field (one part per line, Name: #rrggbb or Name: red, green, blue, or JSON) is parsed by the page parser and consumed first, and the color step writes that color on every vertex of each named part and reads it back per part from the written GLB; a part the model does not carry is refused plainly by name and nothing is written. With no plugin connected the hand-written specification is the direction and no judge verdict is claimed; where a plugin is connected, Glimmer judges the colored output through the plugin road.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_coloring" class="aiTabOut" rows="2" aria-label="Coloring output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="coloring">Go on</button><button type="button" data-ai-tab-redo="coloring">Redo this step</button></div></td></tr>
+      <tr data-ai-tab-step="polish"><td>8. Polish</td><td>Glimmer alone, as each round judge</td><td><span class="small" id="aiTabState_polish">not run yet</span><div class="small">Polish stands wired: a round specification written in the gate field (one round per line, Round: budget N with detail weights and Ref: names, or JSON) is parsed by the page parser and consumed first, and the loop drives the detail step round over round against the standing model - each round lands on its budget exactly where the budget parity allows a watertight landing, reads back per part from the written GLB, and names its references in the run log. In step by step mode the loop stops after each round for your word, and the gate field as you edit it at the stop is the next round's direction; a parity-blocked round stops the loop at that round, named, never skipped. With no plugin connected the hand-written rounds are the direction and no judge verdict is claimed; where a plugin is connected, Glimmer judges each round through the plugin road and a finish verdict stops the loop.</div><div class="small">Manual gate: edit this step output by hand in the field below before the next step uses it; the edited output is what the next step receives.</div><textarea id="aiTabOut_polish" class="aiTabOut" rows="2" aria-label="Polish output, editable"></textarea><div class="row"><button type="button" data-ai-tab-go="polish">Go on</button><button type="button" data-ai-tab-redo="polish">Redo this step</button></div></td></tr>
+    </table>
   </div>
   <div class="row"><label>Now</label><span id="aiStatus">idle</span></div>
   <div id="aiLog" class="hint"></div>
@@ -382,6 +440,7 @@
   <div class="row"><label>Output folder</label><input type="text" id="setOutFolder" style="flex:1" placeholder="Folder the Ai steps write into"></div>
   <div class="row"><label>Plugin point - endpoint</label><input type="text" id="setLlmUrl" style="flex:1" placeholder="Open plugin point: a third-party plugin can connect a local language model here. Nothing is connected until a plugin is installed."></div>
   <div class="row"><label>Plugin point - model</label><input type="text" id="setLlmModel" style="flex:1" placeholder="The language model file a connected plugin would use. Empty until a plugin is connected."></div>
+  <div class="row"><label>Plugin point - client file</label><input type="text" id="setPluginClient" style="flex:1" placeholder="Path or URL of the plugin client file (Describe_It_Client_V1.JS shape). Empty until a plugin is connected."></div>
   <div class="row"><label>Reveal bitmaps</label><input type="text" id="setRevealDir" style="flex:1" placeholder="Folder of reveal bitmaps from the 3D sweeps (a joint with a bitmap fills from it, not from a disc)"></div>
   <p class="hint">Light is the default. Your choices are remembered on this machine. The bridge paths are machine specifics: they live here in Settings, never in the step code. The plugin point is the editor's one open connection point for a third-party plugin: it does nothing until a plugin is connected there, and no language model is built into the editor.</p>
 </div>
@@ -1494,8 +1553,9 @@ function buildList() {
     sl.addEventListener("input", () => setAngle(it, +sl.value, true));
     const num = document.createElement("input");
     num.type = "number"; num.className = "angNum"; num.min = -180; num.max = 180; num.step = 1; num.value = it.angle;
-    num.title = "Type an exact angle";
-    num.addEventListener("change", () => { if (num.value !== "") setAngle(it, +num.value, false); });
+    num.title = "Type degrees, then press Enter";
+    num.addEventListener("change", () => { ME22_applyTypedAngle(it, num); });
+    num.addEventListener("keydown", ev => { if (ME22_angleEnterKey(ev)) { ev.preventDefault(); ev.stopPropagation(); ME22_applyTypedAngle(it, num); } });
     num.addEventListener("click", ev => ev.stopPropagation());
     const dg = document.createElement("span"); dg.className = "deg"; dg.textContent = it.angle + "°";
     const bB = document.createElement("button"); bB.textContent = "▼"; bB.title = "Move layer toward back";
@@ -1553,8 +1613,45 @@ $("fParent").addEventListener("change", () => { if (!selected) return;
   selected.parent = $("fParent").value || null; drawWires(); status(`${selected.label} now connects to ${selected.parent ? items[selected.parent].label : "nothing (root)"}.`); });
 $("fPinX").addEventListener("change", () => movePin(selected, +$("fPinX").value, selected.pin.y));
 $("fPinY").addEventListener("change", () => movePin(selected, selected.pin.x, +$("fPinY").value));
+/* ---------------- Bit 10: the angle degrees field (issue 66) ----------------
+   Beside the main angle slider, a number box:
+   type a number, press Enter, the slider goes
+   to it - and the same box stands beside every
+   part row's angle slider. The typed degrees drive the slider
+   in both places through the shared helper
+   below: it reads the box, runs
+   the part's standing setAngle (which clamps to
+   the part's limits, honours its blacklist,
+   rotates the part's layer on the stage and
+   syncs the slider, the box and the degree
+   readout), and the box then reads the angle
+   the part actually took. The boxes' standing
+   change wiring stays as the blur road, now
+   through the same helper; Enter is the road
+   this bit adds.
+   Source: Kevin, original work (V22 Bit 10,
+   2026-11-19); the helper's shape follows the
+   estate's own typed-entry pattern - the Fill
+   radius number box beside its slider, whose
+   change wiring calls ME22_setRadius on the
+   selected point - applied to the angle
+   controls through the standing setAngle. */
+function ME22_applyTypedAngle(it, box) {
+  if (!it || !box || box.value === "") return false;
+  const deg = Number(box.value);
+  if (!Number.isFinite(deg)) return false;
+  setAngle(it, deg, false);
+  box.value = it.angle;
+  return true;
+}
+function ME22_angleEnterKey(ev) {
+  return !!ev && (ev.key === "Enter" || ev.keyCode === 13);
+}
+window.ME22_applyTypedAngle = ME22_applyTypedAngle;
+window.ME22_angleEnterKey = ME22_angleEnterKey;
 $("fAngle").addEventListener("input", () => { if (selected) setAngle(selected, +$("fAngle").value, true); });
-$("fAngleNum").addEventListener("change", () => { if (selected && $("fAngleNum").value !== "") setAngle(selected, +$("fAngleNum").value, false); });
+$("fAngleNum").addEventListener("change", () => { if (selected) ME22_applyTypedAngle(selected, $("fAngleNum")); });
+$("fAngleNum").addEventListener("keydown", ev => { if (selected && ME22_angleEnterKey(ev)) { ev.preventDefault(); ME22_applyTypedAngle(selected, $("fAngleNum")); } });
 $("fMin").addEventListener("change", () => { if (selected) { selected.min = +$("fMin").value; setAngle(selected, selected.angle); } });
 $("fMax").addEventListener("change", () => { if (selected) { selected.max = +$("fMax").value; setAngle(selected, selected.angle); } });
 $("blackBtn").addEventListener("click", () => { if (!selected) return;
@@ -1747,8 +1844,28 @@ function ME22_dataURL(bytes, mime) {
     fr.onload = () => r(fr.result);
     fr.readAsDataURL(new Blob([bytes], { type: mime || "image/png" })); });
 }
+/* ME22_openGLB, rewritten whole 2026-11-18 (the
+   Run 18 legs 12b/12d fix): the old body committed
+   to the shared page state whenever it finished,
+   so an open fired un-awaited by a page handler
+   (the file pick, the Models list) could finish
+   after a newer open and overwrite its triangle
+   count and slider with a stale model's. The
+   method is now prepare-then-commit under a
+   sequence token: every call takes the next
+   number, does all its awaited work into local
+   values, and commits only while it is still the
+   newest open; a superseded open returns without
+   touching shared state. The parse, image, view
+   and count work is the proven body, carried
+   literally. Source: Kevin, original work;
+   diagnosis in V22_Prep_V1/
+   Bit2_Run18_Readback_Diagnosis_V1.TXT. */
+let ME22_openSeq = 0;
 async function ME22_openGLB(file) {
+  const seq = ++ME22_openSeq;
   const buf = await file.arrayBuffer();
+  if (seq !== ME22_openSeq) return;
   const dv = new DataView(buf);
   if (dv.getUint32(0, true) !== 0x46546C67) { status("That file is not a GLB."); return; }
   const jlen = dv.getUint32(12, true);
@@ -1759,6 +1876,7 @@ async function ME22_openGLB(file) {
     const bv = gltf.bufferViews[im.bufferView];
     const bytes = new Uint8Array(buf, binStart + (bv.byteOffset || 0), bv.byteLength);
     imgURL[im.name] = await ME22_dataURL(bytes, im.mimeType);
+    if (seq !== ME22_openSeq) return;
   }
   const views = {};
   for (const node of gltf.nodes || []) {
@@ -1797,9 +1915,11 @@ async function ME22_openGLB(file) {
       : (prim.attributes && prim.attributes.POSITION != null ? gltf.accessors[prim.attributes.POSITION] : null);
     if (acc && acc.count) ME22_triCount += Math.floor(acc.count / 3);
   }
+  if (seq !== ME22_openSeq) return;
   ME22_VIEWS = views; ME22_GLB = { name: file.name };
   window.ME22_GLB_TRIANGLES = ME22_triCount;
   if (window.ME22_detailSync) ME22_detailSync();
+  if (window.ME22_brushNoteOpen) ME22_brushNoteOpen(file.name);
   if (ME22_URL) URL.revokeObjectURL(ME22_URL);
   ME22_URL = URL.createObjectURL(file); ME22_NAME = file.name;
   const mp = $("modelPick"); mp.innerHTML = "";
@@ -2264,6 +2384,7 @@ fit();
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 /* 3D mode: the GLB with its joint points. Click a point (or its row),
    drag it in the view plane, fine-tune with the X/Y/Z sliders, and
    Save writes the updated Joint Points file. */
@@ -2335,7 +2456,14 @@ function setup() {
   document.getElementById("g3moveoff").addEventListener("click", () => ME22_setMove("off"));
   document.getElementById("g3amp").addEventListener("input", (e) => { MOVE3.amp = parseFloat(e.target.value); });
   document.getElementById("g3speed").addEventListener("input", (e) => { MOVE3.speed = parseFloat(e.target.value); });
-  const loop = () => { raf = requestAnimationFrame(loop); if (document.hidden || !host.offsetParent) return; ME22_moveTick(); controls.update(); renderer.render(scene, camera); };
+  // Piece G (2026-11-19): the loop also early-returns while
+  // the placement-time rendering contract's hold stands
+  // (window.ME22_renderHold, set by ME22_beginRenderHold in
+  // the Alongside section below) - the same road as the
+  // hidden checks beside it, so a held page schedules its
+  // next frame and paints nothing. Source:
+  // Lane_Record_Bit13_PieceF_V1.TXT.
+  const loop = () => { raf = requestAnimationFrame(loop); if (document.hidden || !host.offsetParent || window.ME22_renderHold) return; ME22_moveTick(); controls.update(); renderer.render(scene, camera); };
   loop();
 }
 function buildPoints() {
@@ -2625,6 +2753,421 @@ function onMove(ev) {
   }
 }
 function onUp() { dragP = null; if (controls) controls.enabled = true; }
+/* ---------------- more models alongside (Bit 8) ---------------- */
+// Loading a GLB here never replaces what is open. The
+// document layer follows the staged glTF-Transform
+// core (GQ-01 in Parts_Library_V1, MIT, Copyright
+// (c) 2024 Don McCurdy): one document holds every
+// loaded GLB's scenes and nodes side by side, and a
+// node carries translation, rotation and scale,
+// which IS the 3D placement. This page's document is
+// the 3D stage itself: the open model keeps its own
+// slot (currentModel) and every added model stands
+// in its own group beside it, so an alongside add,
+// move or remap never writes the open model.
+// The axis remap and placement below are
+// Axis_Remap_V1.TS copied literally into this
+// page's terms (Elements_Parts_V1/
+// Multi_Glb_Placement_V1, MD5
+// 137a97932d68a8671ff3308647c939af at graft time):
+// remapAxes(node, xFrom, yFrom) becomes
+// ME22_remapAlongsideQuat plus the per-object
+// apply, and placeNode(node, translation, rotation,
+// scale) becomes ME22_placeAlongside - the node's
+// setTranslation / setRotation / setScale read here
+// as the three.js object's position, quaternion and
+// scale, the same TRS the combined save writes.
+// Source: Duke, original work (Axis_Remap_V1.TS,
+// 2026-11-16), written against @gltf-transform/core
+// (MIT, Don McCurdy) - the document layer staged by
+// graft GQ-01; the page wiring is Kevin, original
+// work (V22 Bit 8, 2026-11-19).
+const ME22_AXES8 = { X: [1, 0, 0], Y: [0, 1, 0], Z: [0, 0, 1] };
+function ME22_cross8(a, b) {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+// Quaternion from a rotation matrix whose columns are
+// the new X, Y, Z basis vectors (gl-matrix layout,
+// xyzw) - quatFromBasis in Axis_Remap_V1.TS, copied
+// literally.
+function ME22_quatFromBasis8(x, y, z) {
+  const m00 = x[0], m01 = y[0], m02 = z[0];
+  const m10 = x[1], m11 = y[1], m12 = z[1];
+  const m20 = x[2], m21 = y[2], m22 = z[2];
+  const trace = m00 + m11 + m22;
+  let qx = 0, qy = 0, qz = 0, qw = 1;
+  if (trace > 0) {
+    const s = Math.sqrt(trace + 1.0) * 2;
+    qw = 0.25 * s; qx = (m21 - m12) / s; qy = (m02 - m20) / s; qz = (m10 - m01) / s;
+  } else if (m00 > m11 && m00 > m22) {
+    const s = Math.sqrt(1.0 + m00 - m11 - m22) * 2;
+    qw = (m21 - m12) / s; qx = 0.25 * s; qy = (m01 + m10) / s; qz = (m02 + m20) / s;
+  } else if (m11 > m22) {
+    const s = Math.sqrt(1.0 + m11 - m00 - m22) * 2;
+    qw = (m02 - m20) / s; qx = (m01 + m10) / s; qy = 0.25 * s; qz = (m12 + m21) / s;
+  } else {
+    const s = Math.sqrt(1.0 + m22 - m00 - m11) * 2;
+    qw = (m10 - m01) / s; qx = (m02 + m20) / s; qy = (m12 + m21) / s; qz = 0.25 * s;
+  }
+  return [qx, qy, qz, qw];
+}
+// remapAxes in Axis_Remap_V1.TS: the new X axis is
+// built from one chosen source axis, the new Y from
+// another; Z is their cross product, so the frame
+// stays right-handed and untwisted.
+function ME22_remapAlongsideQuat(xFrom, yFrom) {
+  const x = ME22_AXES8[xFrom], y = ME22_AXES8[yFrom];
+  if (!x || !y) return null;
+  const z = ME22_cross8(x, y);
+  if (Math.hypot(z[0], z[1], z[2]) < 1e-9) return null;
+  return ME22_quatFromBasis8(x, y, z);
+}
+const ME22_alongside = [];
+let ME22_alongsideSeq = 0, ME22_alongsideSel = null;
+function ME22_alongsideStatus(text) {
+  const el8 = document.getElementById("alongsideStatus");
+  if (el8) el8.textContent = text;
+}
+function ME22_alongsideEntry(id) {
+  return ME22_alongside.find(e => e.id === id) || null;
+}
+function ME22_alongsidePaint() {
+  const list = document.getElementById("alongsideList");
+  const pick = document.getElementById("alongsideObj");
+  if (list) {
+    list.innerHTML = "";
+    for (const e of ME22_alongside) {
+      const row = el("div", "row", list);
+      const lab = el("span", "", row);
+      lab.textContent = e.name + " - at " + e.group.position.toArray().map(v => v.toFixed(2)).join(", ")
+        + "; X from " + e.xFrom + ", Y from " + e.yFrom;
+      lab.style.flex = "1";
+      const btn = el("button", "", row, "Select");
+      btn.addEventListener("click", () => ME22_selectAlongside(e.id));
+    }
+  }
+  if (pick) {
+    pick.innerHTML = "";
+    for (const e of ME22_alongside) {
+      const op = document.createElement("option");
+      op.value = e.id; op.textContent = e.name;
+      if (e.id === ME22_alongsideSel) op.selected = true;
+      pick.appendChild(op);
+    }
+  }
+  const cur = ME22_alongsideEntry(ME22_alongsideSel);
+  if (cur) {
+    const fx = document.getElementById("alongsideX"), fy = document.getElementById("alongsideY"), fz = document.getElementById("alongsideZ");
+    if (fx) fx.value = cur.group.position.x;
+    if (fy) fy.value = cur.group.position.y;
+    if (fz) fz.value = cur.group.position.z;
+    const xf = document.getElementById("alongsideXFrom"), yf = document.getElementById("alongsideYFrom");
+    if (xf) xf.value = cur.xFrom;
+    if (yf) yf.value = cur.yFrom;
+  }
+}
+function ME22_selectAlongside(id) {
+  ME22_alongsideSel = id;
+  ME22_alongsidePaint();
+  const e = ME22_alongsideEntry(id);
+  if (e) ME22_alongsideStatus("Selected alongside: " + e.name);
+}
+// placeNode in Axis_Remap_V1.TS, in this page's
+// terms: translation, then rotation (xyzw
+// quaternion), then scale, set on the one object.
+function ME22_placeAlongside(id, translation, rotation, scale) {
+  const e = ME22_alongsideEntry(id);
+  if (!e) return false;
+  if (translation) e.group.position.fromArray(translation);
+  if (rotation) e.group.quaternion.fromArray(rotation);
+  if (scale) e.group.scale.fromArray(scale);
+  ME22_alongsidePaint();
+  return true;
+}
+function ME22_moveAlongside(id, translation) {
+  return ME22_placeAlongside(id, translation, null, null);
+}
+// The per-object axis remap: the rotation is stored
+// on the added object alone, so it saves into the
+// combined GLB like any other placement; no other
+// object on the stage is touched.
+function ME22_remapAlongside(id, xFrom, yFrom) {
+  const e = ME22_alongsideEntry(id);
+  if (!e) return false;
+  const q = ME22_remapAlongsideQuat(xFrom, yFrom);
+  if (!q) { ME22_alongsideStatus("Axis remap refused: the new X and the new Y must be two different directions."); return false; }
+  e.group.quaternion.fromArray(q);
+  e.xFrom = xFrom; e.yFrom = yFrom;
+  ME22_alongsidePaint();
+  ME22_alongsideStatus("Axes remapped for " + e.name + " alone: X from " + xFrom + ", Y from " + yFrom + ".");
+  return true;
+}
+// The alongside load: a second GLBLoader road that
+// never runs ME22_dispose and never touches
+// currentModel, ME22_URL or ME22_NAME - the added
+// model stands in its own group beside the open
+// model, the way the staged document holds scenes
+// side by side.
+// Piece G rewrite (Finish Plan V3 step #12,
+// Bit 13, 2026-11-19): the placement-time
+// rendering contract, rewritten whole on the
+// proven root cause in
+// Lane_Record_Bit13_PieceF_V1.TXT. Piece F
+// proved the standing page repaints the live
+// scene every animation frame while alongside
+// parts accumulate in it - 69 textures of
+// 1024x1024 per part, in software WebGL - so
+// each added part starves the next load, the
+// bounded timer, and the page itself, and no
+// larger bound can fix it. The contract now
+// stands: rendering pauses while a placement run
+// is in flight, and while any alongside load or
+// the combined save is in flight, under a
+// counted render hold (ME22_beginRenderHold /
+// ME22_endRenderHold below); the render loop
+// early-returns on the hold exactly as it
+// already did for a hidden document or a hidden
+// host, and rendering resumes when the outermost
+// hold ends. Placed parts, the entry shape,
+// status lines and the combined save behaviour
+// are unchanged, apart from the rendering
+// contract and one error fix in the same
+// rewrite: ME22_addAlongsideGLB names the load
+// error in its status instead of discarding it,
+// the gap Piece F's candidate C1 named. The
+// timer bound stands at 300 seconds, set so
+// that healthy loads are not timed out, and the
+// timer race stands, so every call settles: the
+// entry on success, null on error or timeout.
+// Source road: the promise-native three.js r160
+// APIs - GLTFLoader.loadAsync and
+// GLTFExporter.parseAsync (three@0.160.0, the
+// version this page's import map pins) - each
+// raced against the bounded timer through
+// ME22_withTimeout. Inputs, outputs, status
+// lines and the ME22_alongside record are
+// unchanged.
+// Source: Lane_Record_Bit13_PieceF_V1.TXT (the
+// proven root cause and the named direction);
+// the render hold and the section shape are
+// Kevin, original work (V22 Bit 13 piece G,
+// 2026-11-19).
+const ME22_ALONGSIDE_LOAD_TIMEOUT_MS = 300000;
+const ME22_ALONGSIDE_SAVE_TIMEOUT_MS = 300000;
+// The counted render hold (Piece G, 2026-11-19):
+// the counter, not a bare flag, so holds nest -
+// a placement run's hold is never released early
+// by an alongside load or the combined save
+// inside it. ME22_beginRenderHold raises the
+// window flag the render loop reads;
+// ME22_endRenderHold clears it only when the
+// outermost hold ends. Both stand on window, so
+// the placement runner in its own script block
+// holds the same counter. Source:
+// Lane_Record_Bit13_PieceF_V1.TXT; Kevin,
+// original work (V22 Bit 13 piece G, 2026-11-19).
+let ME22_renderHoldCount = 0;
+function ME22_beginRenderHold() {
+  ME22_renderHoldCount += 1;
+  window.ME22_renderHold = true;
+  window.ME22_renderHoldCount = ME22_renderHoldCount;
+}
+function ME22_endRenderHold() {
+  if (ME22_renderHoldCount > 0) ME22_renderHoldCount -= 1;
+  window.ME22_renderHold = ME22_renderHoldCount > 0;
+  window.ME22_renderHoldCount = ME22_renderHoldCount;
+}
+window.ME22_beginRenderHold = ME22_beginRenderHold;
+window.ME22_endRenderHold = ME22_endRenderHold;
+function ME22_withTimeout(promise, ms) {
+  let timer = null;
+  const limit = new Promise((resolve, reject) => {
+    timer = setTimeout(() => reject(new Error("timed out after " + ms + " ms")), ms);
+  });
+  return Promise.race([promise, limit]).finally(() => { if (timer !== null) clearTimeout(timer); });
+}
+window.ME22_withTimeout = ME22_withTimeout;
+// The load itself, under the Piece G render
+// hold: while the load is in flight the render
+// loop stands paused (see the contract above),
+// so the parts already placed cannot starve the
+// loader, the bounded timer, or the page. The
+// hold is counted, so a placement run's own hold
+// is never released early by an add inside it.
+// The load error is NAMED in the status - Piece
+// F proved the standing catch discarded it,
+// which left a fast fail with no cause on
+// record. Source: Lane_Record_Bit13_PieceF_V1.TXT.
+async function ME22_addAlongsideGLB(url, name) {
+  if (!scene) { ME22_alongsideStatus("Open the 3D view first - an alongside model stands on the 3D stage."); return null; }
+  let g = null;
+  ME22_beginRenderHold();
+  try {
+    g = await ME22_withTimeout(new GLTFLoader().loadAsync(url), ME22_ALONGSIDE_LOAD_TIMEOUT_MS);
+  } catch (loadErr) {
+    ME22_alongsideStatus("The alongside GLB could not be loaded: " + (loadErr && loadErr.message ? loadErr.message : String(loadErr)));
+    return null;
+  } finally {
+    ME22_endRenderHold();
+  }
+  if (!g || !g.scene) { ME22_alongsideStatus("The alongside GLB could not be loaded."); return null; }
+  const group = new THREE.Group();
+  group.name = "Alongside_" + (name || "model");
+  group.add(g.scene);
+  scene.add(group);
+  const e = { id: "along" + (++ME22_alongsideSeq), name: name || "model", url, group, xFrom: "X", yFrom: "Y" };
+  ME22_alongside.push(e);
+  ME22_alongsideSel = e.id;
+  ME22_alongsidePaint();
+  ME22_alongsideStatus("Added alongside: " + e.name + " - the open model stands untouched beside it. Drag it in the view, move it, or remap its axes.");
+  return e;
+}
+async function ME22_addAlongsideFile(file) {
+  if (!file) return null;
+  if (window.ME22_addModel) ME22_addModel({ name: file.name, kind: "opened", file });
+  return ME22_addAlongsideGLB(URL.createObjectURL(file), file.name);
+}
+// The open model's own placement state, read only:
+// the proof surface that an alongside add, move or
+// remap leaves the first model exactly as it stood.
+function ME22_firstModelState() {
+  if (!currentModel) return null;
+  return { name: ME22_NAME || null, url: ME22_URL || null,
+    position: currentModel.position.toArray(),
+    quaternion: currentModel.quaternion.toArray(),
+    scale: currentModel.scale.toArray(),
+    alongside: ME22_alongside.length };
+}
+// The combined save: the staged core's write road
+// (WebIO writeBinary in GQ-01) in this page's terms -
+// one GLB holding the open model and every alongside
+// model at its placed transform, written from
+// clones, so the live stage is never mutated by the
+// save. The open model's own file is never the
+// download's target: the combined file is new.
+async function ME22_saveCombined() {
+  // Piece G (2026-11-19): the whole export stands
+  // under the same rendering hold as placement
+  // (counted, so a call inside ME22_runPlacement
+  // nests) - the exporter and its bounded timer
+  // no longer fight the render loop for the main
+  // thread, and the finally releases the hold on
+  // every exit, the early return included.
+  // Source: Lane_Record_Bit13_PieceF_V1.TXT.
+  ME22_beginRenderHold();
+  try {
+  if (!currentModel && !ME22_alongside.length) { ME22_alongsideStatus("Nothing to combine yet - open a model, or add one alongside."); return null; }
+  const root = new THREE.Group();
+  root.name = "Combined";
+  const names = [];
+  if (currentModel) { const c = currentModel.clone(true); c.name = currentModel.name || "OpenModel"; root.add(c); names.push(ME22_NAME || c.name); }
+  for (const e of ME22_alongside) { const c = e.group.clone(true); root.add(c); names.push(e.name); }
+  let out = null;
+  try {
+    out = await ME22_withTimeout(new GLTFExporter().parseAsync(root, { binary: true }), ME22_ALONGSIDE_SAVE_TIMEOUT_MS);
+  } catch (err) {
+    ME22_alongsideStatus("The combined save failed: " + (err && err.message ? err.message : err));
+    return null;
+  }
+  const buf = out instanceof ArrayBuffer ? out : null;
+  window.ME22_lastCombined = { names, count: names.length, bytes: buf ? buf.byteLength : 0 };
+  window.ME22_lastCombinedBuffer = buf;
+  if (buf) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([buf], { type: "model/gltf-binary" }));
+    a.download = "Combined_Models_V1.GLB"; a.click(); URL.revokeObjectURL(a.href);
+    ME22_alongsideStatus("Combined save written: " + names.length + " model(s) - " + names.join(" + ") + " (" + buf.byteLength + " bytes). The open model itself was not written.");
+  } else ME22_alongsideStatus("The combined save did not produce a GLB.");
+  return window.ME22_lastCombined;
+  } finally {
+    ME22_endRenderHold();
+  }
+}
+window.ME22_alongside = ME22_alongside;
+window.ME22_addAlongsideGLB = ME22_addAlongsideGLB;
+window.ME22_addAlongsideFile = ME22_addAlongsideFile;
+window.ME22_placeAlongside = ME22_placeAlongside;
+window.ME22_moveAlongside = ME22_moveAlongside;
+window.ME22_remapAlongside = ME22_remapAlongside;
+window.ME22_selectAlongside = ME22_selectAlongside;
+window.ME22_saveCombined = ME22_saveCombined;
+window.ME22_firstModelState = ME22_firstModelState;
+// One placed part's world bounding box, read the
+// standing way (THREE.Box3.setFromObject, as the
+// frame fit reads it): the rigging-help record in
+// the Bit 13 piece 2b section computes its overlap
+// centres from these boxes. Kevin, original work
+// (V22 Bit 13 piece 2b, 2026-11-19).
+function ME22_alongsideBox(name) {
+  const e = ME22_alongside.find(en => en.name === name) || null;
+  if (!e) return null;
+  e.group.updateWorldMatrix(true, true);
+  const b = new THREE.Box3().setFromObject(e.group);
+  if (!b || b.isEmpty()) return null;
+  return { min: b.min.toArray(), max: b.max.toArray() };
+}
+window.ME22_alongsideBox = ME22_alongsideBox;
+/* Dragging an alongside model in the 3D view, the
+   way rig points are dragged: the same raycast and
+   the same view plane the point drag uses (onDown /
+   onMove above), with the orbit controls held off
+   while the model moves and the grab offset kept, so
+   the model does not jump. A press that hits a rig
+   point keeps the point drag - these handlers stand
+   down while a point drag runs. */
+let ME22_dragAlong = null;
+const ME22_dragAlongPlane = new THREE.Plane();
+const ME22_dragAlongOff = new THREE.Vector3();
+function ME22_alongsideOnDown(ev) {
+  if (!renderer || dragP || !ME22_alongside.length) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(ME22_alongside.map(e => e.group), true);
+  if (!hits.length) return;
+  let o = hits[0].object;
+  while (o && !ME22_alongside.some(e => e.group === o)) o = o.parent;
+  if (!o) return;
+  const e = ME22_alongside.find(en => en.group === o);
+  ME22_dragAlong = e; ME22_selectAlongside(e.id);
+  ME22_dragAlongPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), hits[0].point);
+  ME22_dragAlongOff.copy(e.group.position).sub(hits[0].point);
+  controls.enabled = false;
+}
+function ME22_alongsideOnMove(ev) {
+  if (!ME22_dragAlong) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const out = new THREE.Vector3();
+  if (ray.ray.intersectPlane(ME22_dragAlongPlane, out)) {
+    ME22_dragAlong.group.position.copy(out).add(ME22_dragAlongOff);
+    ME22_alongsidePaint();
+  }
+}
+function ME22_alongsideOnUp() { if (ME22_dragAlong) { ME22_dragAlong = null; if (controls) controls.enabled = true; } }
+(function ME22_alongsideWire() {
+  const add = document.getElementById("alongsideAddBtn"), file = document.getElementById("alongsideFile");
+  if (add && file) add.addEventListener("click", () => file.click());
+  if (file) file.addEventListener("change", () => { const f = file.files && file.files[0]; if (f) ME22_addAlongsideFile(f); file.value = ""; });
+  const pick = document.getElementById("alongsideObj");
+  if (pick) pick.addEventListener("change", () => ME22_selectAlongside(pick.value));
+  const mv = document.getElementById("alongsideMoveBtn");
+  if (mv) mv.addEventListener("click", () => {
+    const v = id => parseFloat((document.getElementById(id) || {}).value) || 0;
+    if (ME22_moveAlongside(ME22_alongsideSel, [v("alongsideX"), v("alongsideY"), v("alongsideZ")]))
+      ME22_alongsideStatus("Moved the selected model to " + v("alongsideX") + ", " + v("alongsideY") + ", " + v("alongsideZ") + ".");
+  });
+  const rm = document.getElementById("alongsideRemapBtn");
+  if (rm) rm.addEventListener("click", () => {
+    const xf = (document.getElementById("alongsideXFrom") || {}).value || "X";
+    const yf = (document.getElementById("alongsideYFrom") || {}).value || "Y";
+    ME22_remapAlongside(ME22_alongsideSel, xf, yf);
+  });
+  const sv = document.getElementById("alongsideSaveBtn");
+  if (sv) sv.addEventListener("click", () => { ME22_saveCombined(); });
+})();
+
 window.ME3D_start = function (url, name) {
   const eh = document.getElementById("emptyHint"); if (eh) eh.style.display = "none";
   document.getElementById("stage").style.display = "none";
@@ -2637,7 +3180,9 @@ window.ME3D_start = function (url, name) {
   document.getElementById("howText").textContent = "A 3D GLB model with joint points. Click a point to select it, drag it in the view, fine-tune with the sliders. Save writes the updated Joint Points file.";
   document.getElementById("modelInfo").textContent = name || "Loaded GLB model.";
   if (!renderer) { setup(); host.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); }
+    host.addEventListener("pointerdown", ME22_alongsideOnDown);
+    window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointermove", ME22_alongsideOnMove); window.addEventListener("pointerup", ME22_alongsideOnUp); }
   renderer.setSize(host.clientWidth, host.clientHeight);
   loadGLB(url || PAPER_GLB);
 };
@@ -2658,6 +3203,27 @@ window.ME22_startEagle3D = function () {
   window.ME3D_start(EAGLE_GLB, "Kevin the Eagle - Kevin_Eagle_Paper.GLB.");
 };
 window.ME3D_stop = function () { host.style.display = "none"; };
+/* V22 Bit 3: the brush centre pick and the model's
+   centre for the Brushes panel - the raycast runs
+   here, where the view's raycaster, camera and
+   loaded model live. The pick converts the hit
+   point into the hit mesh's own frame, the frame
+   the brush module works in. Kevin, original work. */
+window.ME3D_pick = function (nx, ny) {
+  if (!currentModel) return null;
+  ray.setFromCamera(new THREE.Vector2(nx, ny), camera);
+  const hits = ray.intersectObject(currentModel, true);
+  if (!hits.length) return null;
+  const p = hits[0].object.worldToLocal(hits[0].point.clone());
+  return [p.x, p.y, p.z];
+};
+window.ME3D_centre = function () {
+  if (!currentModel) return null;
+  const box = new THREE.Box3().setFromObject(currentModel);
+  if (!isFinite(box.min.x)) return null;
+  const c = box.getCenter(new THREE.Vector3());
+  return [c.x, c.y, c.z];
+};
 /* V18: the write-back, rewritten with the harvest. The
    dragged position rides its node's world transform back
    to the node's local frame, then divides by the same
@@ -3981,7 +4547,7 @@ document.querySelectorAll("button[data-char]").forEach(b => {
 /* ---------------- settings (bridge and local programs) ---------------- */
 const ME22_SET_IDS = { bridgeUrl: "setBridgeUrl", toolHome: "setToolHome",
   cudaPy: "setCudaPy", modelHome: "setModelHome", outFolder: "setOutFolder",
-  llmUrl: "setLlmUrl", llmModel: "setLlmModel", revealDir: "setRevealDir" };
+  llmUrl: "setLlmUrl", llmModel: "setLlmModel", pluginClient: "setPluginClient", revealDir: "setRevealDir" };
 function ME22_settings() {
   const out = { bridgeUrl: "http://127.0.0.1:8765" };
   for (const k of Object.keys(ME22_SET_IDS)) {
@@ -4277,6 +4843,80 @@ function ME22_stepParams(extra) {
     llm_endpoint: s.llmUrl, llm_model: s.llmModel }, extra || {});
 }
 
+/* ---------------- the plugin point (Bit 7) ---------------- */
+// The editor's one open plugin point, marked in the
+// Ai section above. The loader reads the client file
+// named in Settings (pluginClient); with none named,
+// nothing loads and every call below no-ops honestly:
+// no plugin connected, and the Ai input behaves
+// exactly as Version 21 left it. A loaded client must
+// carry the Describe_It_Client_V1.JS shape:
+// window.DescribeItPlugin with health, expand, plan
+// and judge. Source: Kevin, original work (V22 Bit 7,
+// 2026-11-19); client shape from
+// Describe_It_Client_V1.JS (Duke, original work).
+function ME22_pluginClient() {
+  const p = window.DescribeItPlugin;
+  if (!p || typeof p.health !== "function" || typeof p.expand !== "function"
+      || typeof p.plan !== "function" || typeof p.judge !== "function") return null;
+  return p;
+}
+function ME22_pluginState(text) {
+  const el = $("aiPluginState"); if (el) el.textContent = text;
+  ME22_aiLog("Plugin point: " + text);
+}
+let ME22_pluginLoaded = "";
+async function ME22_loadPluginClient() {
+  const s = ME22_settings();
+  const file = (s.pluginClient || "").trim();
+  if (!file) { ME22_pluginState("no plugin connected"); return false; }
+  if (ME22_pluginClient() && ME22_pluginLoaded === file) return true;
+  try {
+    await new Promise((resolve, reject) => {
+      const sc = document.createElement("script");
+      sc.src = file; sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  } catch (e) { ME22_pluginState("plugin client file did not load: " + file); return false; }
+  const p = ME22_pluginClient();
+  if (!p) { ME22_pluginState("plugin client loaded but does not carry the Describe_It_Client_V1.JS shape"); return false; }
+  ME22_pluginLoaded = file;
+  if (s.llmUrl && typeof p.setBase === "function") p.setBase(s.llmUrl);
+  const ok = await ME22_pluginHealth();
+  ME22_pluginState(ok ? "plugin connected - " + (p.name || "Describe-It Plugin") : "plugin client loaded but its service did not answer");
+  return ok;
+}
+async function ME22_pluginHealth() {
+  const p = ME22_pluginClient();
+  if (!p) { ME22_aiLog("Plugin health: no plugin connected."); return false; }
+  try { return !!(await p.health()); } catch (e) { return false; }
+}
+async function ME22_pluginExpand(input, kind) {
+  const p = ME22_pluginClient();
+  if (!p) { ME22_aiLog("Plugin expand: no plugin connected - the Ai input runs as Version 21 left it."); return null; }
+  return p.expand(input, kind || "text");
+}
+async function ME22_pluginPlan(instruction, model) {
+  const p = ME22_pluginClient();
+  if (!p) { ME22_aiLog("Plugin plan: no plugin connected - the Ai input runs as Version 21 left it."); return null; }
+  return p.plan(instruction, model || {});
+}
+async function ME22_pluginJudge(instruction, result) {
+  const p = ME22_pluginClient();
+  if (!p) { ME22_aiLog("Plugin judge: no plugin connected - the deterministic stitch numbers alone gate the operation."); return null; }
+  return p.judge(instruction, result || {});
+}
+window.ME22_loadPluginClient = ME22_loadPluginClient;
+window.ME22_pluginHealth = ME22_pluginHealth;
+window.ME22_pluginExpand = ME22_pluginExpand;
+window.ME22_pluginPlan = ME22_pluginPlan;
+window.ME22_pluginJudge = ME22_pluginJudge;
+(function ME22_pluginWire() {
+  const btn = $("aiPluginBtn");
+  if (btn) btn.addEventListener("click", () => { ME22_loadPluginClient(); });
+  ME22_loadPluginClient();
+})();
+
 /* ---------------- the Ai session (inputs + chaining) ---------------- */
 const ME22_aiSession = { pictures: [], glb3d: null, snapshots: null,
   partsFolder: "", rigJson: "", paperGlb: null, model3d: null };
@@ -4304,7 +4944,19 @@ function ME22_chainOutputs(step, out) {
     ME22_aiSession.glb3d = out.glb; ME22_aiSession.model3d = out.glb;
     ME22_setField("aiGlbFile", out.glb); notes.push("glb3d=" + out.glb);
   }
+  if (step === "color" && out.glb && !out.refused) {
+    ME22_aiSession.glb3d = out.glb; ME22_aiSession.model3d = out.glb;
+    ME22_setField("aiGlbFile", out.glb); notes.push("glb3d=" + out.glb);
+  }
   if (step === "torrent" && out.glb && out.stitch_pass) {
+    ME22_aiSession.glb3d = out.glb; ME22_aiSession.model3d = out.glb;
+    ME22_setField("aiGlbFile", out.glb); notes.push("glb3d=" + out.glb);
+  }
+  if (step === "chunk_stitch" && out.glb && out.stitch_pass) {
+    ME22_aiSession.glb3d = out.glb; ME22_aiSession.model3d = out.glb;
+    ME22_setField("aiGlbFile", out.glb); notes.push("glb3d=" + out.glb);
+  }
+  if (step === "brush" && out.glb && !out.refused) {
     ME22_aiSession.glb3d = out.glb; ME22_aiSession.model3d = out.glb;
     ME22_setField("aiGlbFile", out.glb); notes.push("glb3d=" + out.glb);
   }
@@ -4367,6 +5019,245 @@ function ME22_partsParams(label, withOut) {
   return p;
 }
 
+/* ---------------- Bit 9: emoji and description to 3D ----------------
+   The chain whole, wired to the pipeline steps of
+   the same bit (cutout, describe_picture,
+   complete_views, make3d): an emoji is drawn with
+   the device's own emoji font by the staged
+   Emoji_Raster piece below, cut out, completed
+   with any views the set does not hold (the
+   pipeline generates them and the run log names
+   what was generated), and made 3D; a description
+   takes the same road through the editor's own
+   picture-making (describe_picture), or through
+   the plugin's expand first when a plugin is
+   connected. Every product lands in the Models
+   list through the standing make3d chaining, and
+   can be detailed, sectioned, brushed, placed
+   and made paper by the standing steps.
+   Source: Kevin, original work (V22 Bit 9,
+   2026-11-19); the Emoji_Raster functions are
+   copied literally from Elements_Parts_V1/
+   Emoji_Raster_V1/Emoji_Raster_V1.JS (Duke,
+   original work, 2026-11-16). */
+// Emoji_To_Png_Data_Url(Emoji, Size): draws the emoji
+// centred on a transparent Size x Size canvas and returns
+// a PNG data URL. The glyph is drawn at 0.82 of the canvas
+// so its edges never touch the border - the cutout step
+// downstream needs clear space around the subject.
+function Emoji_To_Png_Data_Url(Emoji, Size) {
+  const Canvas = document.createElement("canvas");
+  Canvas.width = Size;
+  Canvas.height = Size;
+  const Ctx = Canvas.getContext("2d");
+  Ctx.clearRect(0, 0, Size, Size);
+  Ctx.textAlign = "center";
+  Ctx.textBaseline = "middle";
+  Ctx.font = Math.floor(Size * 0.82) + "px serif";
+  Ctx.fillText(Emoji, Size / 2, Size / 2 + Size * 0.04);
+  return Canvas.toDataURL("image/png");
+}
+// Emoji_Has_Glyph(Emoji, Size): true when the device font
+// actually drew the emoji. A missing glyph draws the same
+// empty box for every input, so two different unknown
+// emoji rasterise identically - that sameness is the test.
+function Emoji_Has_Glyph(Emoji, Size) {
+  const Probe = "\u{10FFFF}";
+  return Emoji_To_Png_Data_Url(Emoji, Size) !==
+         Emoji_To_Png_Data_Url(Probe, Size);
+}
+window.Emoji_To_Png_Data_Url = Emoji_To_Png_Data_Url;
+window.Emoji_Has_Glyph = Emoji_Has_Glyph;
+function ME22_bit9State(text) {
+  const el = $("bit9State"); if (el) el.textContent = text;
+}
+async function ME22_bit9ChainFromFiles(folder, files, label, wantName) {
+  const cv = await ME22_bridgeStepLogged("complete_views", ME22_stepParams({ folder, files }));
+  ME22_aiSession.generatedViews = (cv && cv.generated_views) || [];
+  for (const g of ME22_aiSession.generatedViews) {
+    ME22_aiLog("Generated view " + g.view + ": " + g.road + " - " + g.path);
+  }
+  const outName = wantName || ("Bit9_" + label.replace(/[^A-Za-z0-9]+/g, "_") + "_Model_V1.GLB");
+  const out = await ME22_bridgeStepLogged("make3d", ME22_stepParams({ folder: cv.folder, files: cv.files, out_name: outName }));
+  ME22_bit9State(label + " chain done - the model stands in the Models list");
+  ME22_aiLog("Bit 9 chain done (" + label + "): the model stands in the Models list and can be detailed, sectioned, brushed, placed and made paper by the standing steps.");
+  ME22_offer("snapshots");
+  return out;
+}
+async function ME22_bit9EmojiChain(emoji) {
+  const e = (emoji == null ? ME22_fieldVal("aiText") : String(emoji)).trim();
+  if (!e) { ME22_aiLog("Bit 9 emoji chain: no emoji given - type an emoji in the Ai text first."); return null; }
+  if (!Emoji_Has_Glyph(e, 256)) {
+    ME22_bit9State("the device's emoji font has no glyph for that emoji - nothing runs");
+    ME22_aiLog("Bit 9 emoji chain: the device's own emoji font did not draw that emoji (the glyph probe says so) - nothing runs.");
+    return null;
+  }
+  const url = Emoji_To_Png_Data_Url(e, 512);
+  ME22_aiSession.pictures = [{ name: "Emoji_V1.PNG", data_url: url }];
+  ME22_bit9State("emoji drawn with the device's own emoji font - cutting out and making 3D");
+  ME22_aiLog("Bit 9 emoji chain: the emoji is drawn with the device's own emoji font (the Emoji_Raster piece) - cutting out, completing the views and making the 3D model.");
+  const cut = await ME22_bridgeStepLogged("cutout", ME22_stepParams({ images: ME22_aiSession.pictures }));
+  return ME22_bit9ChainFromFiles(cut.folder, cut.files, "emoji");
+}
+async function ME22_bit9DescriptionChain(text, prompt, outName) {
+  const t = (text == null ? ME22_fieldVal("aiText") : String(text)).trim();
+  const p = (prompt || t).trim();
+  if (!p) { ME22_aiLog("Bit 9 description chain: no description given - type a description in the Ai text first."); return null; }
+  ME22_bit9State("description being drawn by the editor's own picture-making");
+  ME22_aiLog("Bit 9 description chain: the description is drawn by the editor's own picture-making, then cut out, the views completed and the 3D model made.");
+  const dp = await ME22_bridgeStepLogged("describe_picture", ME22_stepParams({ prompt: p }));
+  const cut = await ME22_bridgeStepLogged("cutout", ME22_stepParams({ folder: dp.folder, files: dp.files }));
+  return ME22_bit9ChainFromFiles(cut.folder, cut.files, "description", outName);
+}
+window.ME22_bit9EmojiChain = ME22_bit9EmojiChain;
+window.ME22_bit9DescriptionChain = ME22_bit9DescriptionChain;
+window.ME22_bit9ChainFromFiles = ME22_bit9ChainFromFiles;
+(function ME22_bit9Wire() {
+  const eb = $("bit9EmojiBtn"), db = $("bit9DescBtn");
+  if (eb) eb.addEventListener("click", () => { ME22_bit9EmojiChain(); });
+  if (db) db.addEventListener("click", () => { ME22_bit9DescriptionChain(); });
+})();
+
+/* ---------------- the Ai text routing (Bit 7, piece 2) ---------------- */
+// The routing the plugin point stands for, wired
+// through the piece 1 stubs. Classification follows
+// the plan text: an emoji or a description goes to
+// expand, then the editor's own picture and model
+// steps run; an instruction goes to plan, and the
+// editor runs the returned steps with its own
+// tools; a finished torrent operation's stitch
+// report and rendered views go to judge, completing
+// the final pass. With no plugin connected, every
+// route falls back to exact Version 21 behaviour:
+// the router checks for a client FIRST, before any
+// plugin call, and the fallback below calls no
+// plugin function at all (proven by the code census
+// in Check_Bit7_Piece2_V1.PY). Source: Kevin,
+// original work (V22 Bit 7 piece 2, 2026-11-19).
+const ME22_INSTRUCTION_VERBS = ["add", "remove", "delete", "make", "create", "build", "raise", "increase", "reduce", "move", "place", "bind", "attach", "give", "put", "change", "set", "detail", "refine", "smooth", "scale", "rotate", "paint", "sculpt"];
+function ME22_classifyAiText(text) {
+  const t = (text || "").trim();
+  const core = t.replace(/[\s\uFE0F\u200D]/g, "");
+  if (core && [...core].every(ch => {
+    const cp = ch.codePointAt(0);
+    return /\p{Extended_Pictographic}/u.test(ch) || (cp >= 0x1F1E6 && cp <= 0x1F1FF);
+  })) return { route: "expand", kind: "emoji" };
+  const first = (t.toLowerCase().replace(/^please\s+/, "").split(/\s+/)[0] || "").replace(/[^a-z]/g, "");
+  if (ME22_INSTRUCTION_VERBS.includes(first)) return { route: "plan", kind: "instruction" };
+  return { route: "expand", kind: "text" };
+}
+function ME22_aiTextV21(text) {
+  const st = $("aiTextState");
+  if (st) st.textContent = "no plugin connected - the Ai text runs as Version 21 left it";
+  ME22_aiLog("Ai text (no plugin connected): \"" + text + "\" - the Ai input runs as Version 21 left it: the text stays in the Ai text field, and the editor's standing steps above run exactly as before, by their own buttons.");
+  return { routed: "version21" };
+}
+async function ME22_runExpandedPrompt(prompt) {
+  if (!ME22_aiSession.pictures.length) {
+    const st = $("aiTextState");
+    if (st) st.textContent = "expanded prompt ready - pick the Ai pictures, then Make the 3D model runs with it";
+    ME22_aiLog("Expanded prompt stands ready in the session. Pick the Ai pictures above, and Make the 3D model runs with this prompt as its subject.");
+    return false;
+  }
+  const out = await ME22_bridgeStepLogged("make3d", ME22_stepParams({ images: ME22_aiSession.pictures, prompt }));
+  ME22_aiLog("3D first: where a 3D model exists the offered order is Snapshots, Slice, Redraw, Build the layered GLB, Rig it, then Make it paper or Make it 3D.");
+  ME22_offer("snapshots");
+  return out;
+}
+async function ME22_routeExpand(text, kind) {
+  const ans = await ME22_pluginExpand(text, kind);
+  if (!ans || !ans.prompt) { ME22_aiLog("Plugin expand answered with no prompt - nothing runs."); return ans; }
+  ME22_aiSession.expandedPrompt = ans.prompt;
+  ME22_aiSession.expandedFrom = text;
+  const st = $("aiTextState");
+  if (st) st.textContent = "expanded by the plugin (" + (ans.routed_to || "route unnamed") + ")";
+  ME22_aiLog("Plugin expand (" + kind + ", served by " + (ans.routed_to || "an unnamed route") + (ans.escalated ? ", escalated through " + (ans.attempts || []).join(" -> ") : "") + "): " + ans.prompt);
+  await ME22_bit9DescriptionChain(text, ans.prompt);
+  return ans;
+}
+const ME22_PLAN_TOOL_STEPS = { detail: "detail", make3d: "make3d", make_3d: "make_3d", paper: "make_paper", make_paper: "make_paper" };
+async function ME22_runPluginPlanSteps(steps, instruction) {
+  const ran = [], skipped = [], failed = [];
+  for (const step of steps || []) {
+    const kind = (step && step.kind) || "";
+    if (kind === "judge") {
+      const v = await ME22_pluginJudge(instruction || "", { plan_steps: (steps || []).length, ran: ran.slice() });
+      window.ME22_lastJudge = v;
+      if (v) ME22_aiLog("Plugin judge on the plan: " + (v.ok ? "passed" : "did not pass") + (v.note ? " - " + v.note : ""));
+      ran.push("judge");
+    } else if (kind === "make_part") {
+      ME22_aiLog("Plan step \"" + (step.step || kind) + "\": make_part runs as the editor's own Make the 3D model step, its picture-to-model tool.");
+      const ok = await ME22_aiStep("make3d");
+      (ok === false ? failed : ran).push(kind);
+    } else if (ME22_PLAN_TOOL_STEPS[kind]) {
+      const ok = await ME22_aiStep(ME22_PLAN_TOOL_STEPS[kind]);
+      (ok === false ? failed : ran).push(kind);
+    } else {
+      skipped.push(kind);
+      ME22_aiLog("Plan step \"" + ((step && step.step) || kind) + "\": no editor tool stands for plan kind " + (kind || "(unnamed)") + " yet - not run, and not claimed run.");
+    }
+  }
+  return { ran, skipped, failed };
+}
+async function ME22_routePlan(text) {
+  const model = { glb: ME22_aiGlb() || null, parts_folder: ME22_aiPartsFolder(), rig_json: ME22_aiRigJson() };
+  const ans = await ME22_pluginPlan(text, model);
+  const steps = (ans && ans.plan && ans.plan.steps) || [];
+  if (!steps.length) { ME22_aiLog("Plugin plan answered with no steps - nothing runs."); return ans; }
+  const st = $("aiTextState");
+  if (st) st.textContent = "plan returned by the plugin (" + (ans.routed_to || "route unnamed") + ") - running its steps";
+  ME22_aiLog("Plugin plan (" + steps.length + " steps, served by " + (ans.routed_to || "an unnamed route") + (ans.escalated ? ", escalated through " + (ans.attempts || []).join(" -> ") : "") + "): " + steps.map(s => s.kind).join(" -> "));
+  const res = await ME22_runPluginPlanSteps(steps, text);
+  ME22_aiLog("Plan run finished: ran [" + res.ran.join(", ") + "], skipped [" + res.skipped.join(", ") + "], failed [" + res.failed.join(", ") + "].");
+  return { answer: ans, ran: res };
+}
+async function ME22_routeAiText(text) {
+  const raw = (text == null ? ME22_fieldVal("aiText") : String(text)).trim();
+  if (!raw) { ME22_aiLog("Ai text: the field is empty - type an emoji, a description, or an instruction first."); return null; }
+  const c = ME22_classifyAiText(raw);
+  if (c.kind === "emoji") {
+    ME22_aiLog("Ai text routed by the Bit 9 chain: emoji - drawn with the device's own emoji font, cut out, completed and made 3D by the editor's own steps.");
+    try { return await ME22_bit9EmojiChain(raw); }
+    catch (e) { ME22_aiLog("Bit 9 emoji chain failed: " + e.message + " - the Ai input itself is unchanged."); return null; }
+  }
+  if (c.route === "plan") {
+    if (!ME22_pluginClient()) return ME22_aiTextV21(raw);
+    ME22_aiLog("Ai text routed by the plugin point: plan (instruction) - \"" + raw + "\"");
+    try { return await ME22_routePlan(raw); }
+    catch (e) { ME22_aiLog("Plugin routing failed: " + e.message + " - the Ai input itself is unchanged."); return null; }
+  }
+  if (ME22_pluginClient()) {
+    ME22_aiLog("Ai text routed by the plugin point: expand (text) - the expanded prompt feeds the editor's own picture-making.");
+    try { return await ME22_routeExpand(raw, c.kind); }
+    catch (e) { ME22_aiLog("Plugin routing failed: " + e.message + " - the Ai input itself is unchanged."); return null; }
+  }
+  ME22_aiLog("Ai text routed by the Bit 9 chain: description - the editor's own picture-making draws it, then cut out, completed and made 3D.");
+  try { return await ME22_bit9DescriptionChain(raw); }
+  catch (e) { ME22_aiLog("Bit 9 description chain failed: " + e.message + " - the Ai input itself is unchanged."); return null; }
+}
+async function ME22_pluginJudgeTorrent(out) {
+  if (!ME22_pluginClient()) return null;
+  let views = ME22_aiSession.snapshots && ME22_aiSession.snapshots.views;
+  if (!views) {
+    await ME22_aiStep("snapshots");
+    views = ME22_aiSession.snapshots && ME22_aiSession.snapshots.views;
+  }
+  const result = { stitch_report: ME22_stitchText(out), seam_mismatches: out.seam_mismatches, watertight: !!out.watertight, triangles: out.triangles, target_triangles: out.target_triangles, stitch_pass: !!out.stitch_pass, rendered_views: views ? Object.keys(views) : [] };
+  const v = await ME22_pluginJudge("torrent " + (out.operation || "operation"), result);
+  window.ME22_lastJudge = v;
+  if (v) ME22_aiLog("Plugin judge, the final pass on the finished torrent operation: " + (v.ok ? "passed" : "did not pass") + (v.note ? " - " + v.note : "") + " (served by " + (v.routed_to || "an unnamed route") + "). The deterministic stitch numbers above still gate the operation; the judge completes the final pass.");
+  return v;
+}
+window.ME22_classifyAiText = ME22_classifyAiText;
+window.ME22_routeAiText = ME22_routeAiText;
+window.ME22_runPluginPlanSteps = ME22_runPluginPlanSteps;
+window.ME22_pluginJudgeTorrent = ME22_pluginJudgeTorrent;
+(function ME22_aiTextWire() {
+  const btn = $("aiTextBtn"), field = $("aiText");
+  if (btn) btn.addEventListener("click", () => { ME22_routeAiText(); });
+  if (field) field.addEventListener("keydown", (e) => { if (e.key === "Enter") ME22_routeAiText(); });
+})();
+
 /* ---------------- the Ai steps ---------------- */
 const ME22_AI_LABELS = { cut: "Cut out the image", split: "Split into layers",
   make3d: "Make the 3D model", snapshots: "Snapshots of the 3D model",
@@ -4375,7 +5266,9 @@ const ME22_AI_LABELS = { cut: "Cut out the image", split: "Split into layers",
   move_ref: "Movement reference from the 3D model",
   make_paper: "Make it paper", make_3d: "Make it 3D",
   detail: "Detail - set the triangle count",
-  torrent: "Sections - run by torrent sections" };
+  torrent: "Sections - run by torrent sections",
+  brush: "Brushes - paint, erase, sculpt",
+  wired_rig: "Wired rig - paper from the 2D views" };
 function ME22_offer(name) {
   ME22_aiLog("OFFER: " + (ME22_AI_LABELS[name] || name) + " is ready - click it in the Ai menu or the Ai section.");
   document.querySelectorAll('[data-ai-step="' + name + '"]').forEach(b => {
@@ -4447,6 +5340,12 @@ async function ME22_aiStep(name) {
     } else if (name === "torrent") {
       const okTorrent = await ME22_runSections();
       if (!okTorrent) { ME22_aiNow("failed"); ME22_setStepState(name, "failed"); return false; }
+    } else if (name === "brush") {
+      const okBrush = await ME22_brushStroke();
+      if (!okBrush) { ME22_aiNow("failed"); ME22_setStepState(name, "failed"); return false; }
+    } else if (name === "wired_rig") {
+      const p = ME22_partsParams(label, true); if (!p) { ME22_aiNow("failed"); ME22_setStepState(name, "failed"); return false; }
+      await ME22_bridgeStepLogged("wired_rig", ME22_stepParams(p));
     } else if (name === "make_paper" || name === "make_3d") {
       const p = ME22_partsParams(label, true); if (!p) { ME22_aiNow("failed"); ME22_setStepState(name, "failed"); return false; }
       await ME22_bridgeStepLogged(name, ME22_stepParams(p));
@@ -4494,6 +5393,315 @@ async function ME22_runChainFrom(step) {
   }
   ME22_aiLog("Automated run complete: every step finished. Any step can now be adjusted and re-run from that step.");
 }
+/* ---------------- Bit 11: the AI tab shell (Finish Plan V3 step #10, pipeline P4, P6, P7) ----------------
+   The AI tab itself, wired at the plugin point
+   Bit 7 left (step #6): the full step table of
+   the AI pipeline, the three run modes, and a
+   manual gate at every step. Model assignments
+   are the prep census exactly: the specification
+   names no best-fit model for any step beyond
+   Glimmer, so every language row runs on
+   Glimmer alone (fallback and judge); the 3D
+   making row names the editor own tools, no
+   language model. Language work goes only
+   through the standing plugin point -
+   ME22_loadPluginClient and the ME22_plugin
+   calls (Describe_It_Client_V1.JS shape: health,
+   expand, plan, judge) - no new language work
+   stands in this page and no second plugin road
+   is written. The tab runner reuses the standing
+   ME22_aiStep road for the rows that have an
+   editor step; rows with no engine standing
+   (placement on the plan road, coloring, polish)
+   are shell rows and are named skipped, never
+   claimed run. With no plugin connected the tab
+   says so plainly and claims nothing.
+   Source: Kevin, original work (V22 Bit 11,
+   2026-11-19). */
+const ME22_aiTabSteps = [
+  { key: "parts", label: "Parts listing", editorStep: null },
+  { key: "picture", label: "Generation - picture per part", editorStep: null },
+  { key: "make3d", label: "Generation - 3D per part", editorStep: "make3d" },
+  { key: "detail", label: "Detail", editorStep: "detail" },
+  { key: "placement", label: "Placement", editorStep: null },
+  { key: "rigging", label: "Rigging", editorStep: "rig" },
+  { key: "coloring", label: "Coloring", editorStep: "color" },
+  { key: "polish", label: "Polish", editorStep: null }
+];
+let ME22_aiTabIndex = -1;
+let ME22_aiTabWaiting = false;
+function ME22_showAiTab(open) {
+  const panel = $("aiTabPanel");
+  const tabBtn = $("aiTabBtn");
+  const edBtn = $("aiTabEditorBtn");
+  const show = open !== false;
+  if (panel) panel.style.display = show ? "" : "none";
+  if (tabBtn) tabBtn.setAttribute("aria-selected", show ? "true" : "false");
+  if (edBtn) edBtn.setAttribute("aria-selected", show ? "false" : "true");
+  if (show) ME22_aiTabSyncModelState();
+  return show;
+}
+function ME22_aiTabMode() {
+  const el = document.querySelector('input[name="aiTabMode"]:checked');
+  return el ? el.value : "full-auto";
+}
+function ME22_aiTabSetState(key, state) {
+  const el = $("aiTabState_" + key);
+  if (el) el.textContent = state;
+}
+function ME22_aiTabSetRunState(text) {
+  const el = $("aiTabRunState");
+  if (el) el.textContent = text;
+}
+function ME22_aiTabOutput(key) {
+  const el = $("aiTabOut_" + key);
+  return el ? el.value : "";
+}
+function ME22_aiTabSetOutput(key, value) {
+  const el = $("aiTabOut_" + key);
+  if (el) el.value = value == null ? "" : String(value);
+}
+function ME22_aiTabNextInput(key) {
+  const i = ME22_aiTabSteps.findIndex(s => s.key === key);
+  const next = i >= 0 ? ME22_aiTabSteps[i + 1] : null;
+  return { step: next ? next.key : null, input: ME22_aiTabOutput(key) };
+}
+function ME22_aiTabModelConnected() {
+  return !!ME22_pluginClient();
+}
+function ME22_aiTabSyncModelState() {
+  const el = $("aiTabNoModel");
+  if (!el) return false;
+  if (ME22_aiTabModelConnected()) {
+    el.textContent = "Plugin connected: the tab language steps route through the plugin point (expand, plan, judge). Every step in the table stands wired to its engine; no shell rows remain.";
+    return true;
+  }
+  el.textContent = "No model connected: no plugin is connected and no model is answering, so the AI tab claims nothing. The step table names each step model assignment as an assignment only; no step is claimed done, and no model is claimed to run any step in this state. Polish stands wired: its loop drives the detail step round over round; coloring stands wired to its color step.";
+  return false;
+}
+async function ME22_aiTabRunStep(row, input) {
+  ME22_aiTabSetState(row.key, "running");
+  ME22_aiLog("AI tab step: " + row.label + " - mode " + ME22_aiTabMode() +
+    (input ? " - input from the previous step gate: " + input : " - no gate input"));
+  if (row.key === "parts") {
+    const subject = ($("aiTabSubject") && $("aiTabSubject").value.trim()) || "";
+    const gated = ME22_parsePartsList(ME22_aiTabOutput("parts")) || ME22_parsePartsList(input || "");
+    if (gated) {
+      ME22_aiTabSetOutput(row.key, gated.parts.join("\n"));
+      ME22_aiTabSetState(row.key, "done");
+      ME22_aiLog("AI tab: parts listing consumed from the gate field - " + gated.parts.length + " part(s): " + gated.parts.join(", ") + ". One generation job per part runs at the generation rows, in list order.");
+      return true;
+    }
+    if (!ME22_aiTabModelConnected()) {
+      ME22_aiTabSetState(row.key, "not run - no model connected");
+      ME22_aiLog("AI tab: parts listing not run - no parseable parts list in the gate field and no model connected, and the tab claims nothing.");
+      return false;
+    }
+    const plan = await ME22_pluginPlan("List the parts of: " + (subject || "the named subject"), {});
+    if (plan == null) { ME22_aiTabSetState(row.key, "not run - no model connected"); return false; }
+    const planText = typeof plan === "string" ? plan : JSON.stringify(plan);
+    const parsedPlan = ME22_parsePartsList(planText);
+    ME22_aiTabSetOutput(row.key, parsedPlan ? parsedPlan.parts.join("\n") : planText);
+    if (!parsedPlan) {
+      ME22_aiTabSetState(row.key, "plan answer did not parse as a parts list - see the log");
+      ME22_aiLog("AI tab: the plan answer did not parse as a parts list, so no generation job runs from it; the raw answer stands in the gate field for a hand fix.");
+      return false;
+    }
+    ME22_aiTabSetState(row.key, "done");
+    return true;
+  }
+  if (row.key === "picture") {
+    const subject = ($("aiTabSubject") && $("aiTabSubject").value.trim()) || "";
+    const found = ME22_partsListFromGateOrInput(input);
+    if (!found) {
+      ME22_aiTabSetState(row.key, "not run - no parts list");
+      ME22_aiLog("AI tab: picture generation not run - no parseable parts list stands in the Parts listing gate field, and the tab claims nothing.");
+      return false;
+    }
+    const okJobs = await ME22_runPartJobs(subject, found.parts);
+    ME22_aiTabSetOutput(row.key, ME22_generationOutputsText(window.ME22_lastGeneration));
+    ME22_aiTabSetState(row.key, okJobs ? "done" : "failed - stopped at a named part, see the log");
+    return okJobs;
+  }
+  if (row.key === "make3d") {
+    const subject = ($("aiTabSubject") && $("aiTabSubject").value.trim()) || "";
+    const found = ME22_partsListFromGateOrInput(input);
+    if (!found) {
+      ME22_aiTabSetState(row.key, "not run - no parts list");
+      ME22_aiLog("AI tab: 3D generation not run - no parseable parts list stands in the Parts listing gate field, and the tab claims nothing.");
+      return false;
+    }
+    const rec = window.ME22_lastGeneration;
+    if (rec && rec.failed === 0 && ME22_lastGenerationSig === ME22_generationSignature(subject, found.parts)) {
+      ME22_aiTabSetOutput(row.key, ME22_generationOutputsText(rec));
+      ME22_aiTabSetState(row.key, "done");
+      ME22_aiLog("AI tab: 3D generation read back from the generation record - " + rec.jobs.length + " part job(s) already ran for this parts list at the picture row; no part is made twice.");
+      return true;
+    }
+    const okJobs = await ME22_runPartJobs(subject, found.parts);
+    ME22_aiTabSetOutput(row.key, ME22_generationOutputsText(window.ME22_lastGeneration));
+    ME22_aiTabSetState(row.key, okJobs ? "done" : "failed - stopped at a named part, see the log");
+    return okJobs;
+  }
+  if (row.key === "placement") {
+    const placeText = await ME22_runPlacement(input);
+    if (placeText === false) {
+      ME22_aiTabSetState(row.key, "failed - stopped at a named part, see the log");
+      return false;
+    }
+    ME22_aiTabSetOutput(row.key, placeText);
+    ME22_aiTabSetState(row.key, "done");
+    return true;
+  }
+  if (row.key === "coloring") {
+    const ownGate = ME22_aiTabOutput("coloring");
+    const gate = ME22_parseColorSpec(ownGate) ? ownGate : (input || ownGate);
+    const okColor = await ME22_applyColoring(gate);
+    if (window.ME22_lastColoring && !window.ME22_lastColoring.refused && window.ME22_lastColoring.per_part) {
+      ME22_aiTabSetOutput(row.key, ME22_colorPartsText(window.ME22_lastColoring.per_part));
+    }
+    ME22_aiTabSetState(row.key, okColor === false ? "failed - see the log" : "done");
+    return okColor !== false;
+  }
+  if (row.key === "polish") {
+    const ownGate = ME22_aiTabOutput("polish");
+    const gate = ME22_parsePolishRounds(ownGate) ? ownGate : (input || ownGate);
+    const okPolish = await ME22_runPolishLoop(gate);
+    if (Array.isArray(window.ME22_lastPolish) && window.ME22_lastPolish.some(r => r && r.per_part)) {
+      ME22_aiTabSetOutput(row.key, ME22_polishRoundsText(window.ME22_lastPolish));
+    }
+    ME22_aiTabSetState(row.key, okPolish === false ? "failed - see the log" : "done");
+    return okPolish !== false;
+  }
+  if (!row.editorStep) {
+    ME22_aiTabSetState(row.key, "shell row only - no engine claimed");
+    ME22_aiLog("AI tab: " + row.label + " is a shell row in this shell - named and skipped, never claimed run.");
+    return true;
+  }
+  if (row.key === "detail") {
+    const ownGate = ME22_aiTabOutput("detail");
+    const chunkGate = ME22_parseChunkSpec(ownGate) ? ownGate : (input && ME22_parseChunkSpec(input) ? input : "");
+    if (chunkGate) {
+      const okSplit = await ME22_applyChunking(chunkGate);
+      if (!okSplit) { ME22_aiTabSetState(row.key, "failed - see the log"); return false; }
+      window.ME22_lastStitch = null;
+      const okStitch = await ME22_applyChunkStitch();
+      const stitch = window.ME22_lastStitch || {};
+      if (okStitch && stitch.stitch_pass) {
+        ME22_aiTabSetOutput(row.key, ME22_stitchLedgerText(stitch.chunks || []));
+        ME22_aiTabSetState(row.key, "done");
+        return true;
+      }
+      if (stitch.incomplete) {
+        const missNames = (stitch.missing || []).map(mm => mm.name).join(", ");
+        ME22_aiTabSetOutput(row.key, "Chunks still out: " + missNames + " - run the missing chunks and press Redo this step; the returned chunks are held verified and are never re-executed.");
+        ME22_aiTabSetState(row.key, "chunks still out - see the log");
+        return false;
+      }
+      ME22_aiTabSetState(row.key, "failed - see the log");
+      return false;
+    }
+    const gate = ME22_parseDetailMap(ownGate) ? ownGate : (input || ownGate);
+    const okDetail = await ME22_applyDetail(gate);
+    if (window.ME22_lastDetail && window.ME22_lastDetail.per_part) {
+      ME22_aiTabSetOutput(row.key, ME22_detailPartsText(window.ME22_lastDetail.per_part));
+    }
+    ME22_aiTabSetState(row.key, okDetail === false ? "failed - see the log" : "done");
+    return okDetail !== false;
+  }
+  if (row.key === "rigging") {
+    const rigText = ME22_runRigHelp(input);
+    if (rigText === false) {
+      ME22_aiTabSetState(row.key, "not run - no placed parts, see the log");
+      return false;
+    }
+    ME22_aiTabSetOutput(row.key, rigText);
+    ME22_aiTabSetState(row.key, "done");
+    return true;
+  }
+  const ok = await ME22_aiStep(row.editorStep);
+  ME22_aiTabSetState(row.key, ok === false ? "failed - see the log" : "done");
+  return ok !== false;
+}
+async function ME22_aiTabRunFrom(start) {
+  const mode = ME22_aiTabMode();
+  if (mode === "fully-manual") {
+    ME22_aiTabWaiting = false;
+    ME22_aiTabSetRunState("fully manual - no AI step runs by itself");
+    ME22_aiLog("AI tab: fully manual - Solomon does it himself; the tab runs no AI step by itself. Every step above is a tool to run by hand.");
+    return;
+  }
+  ME22_aiTabWaiting = false;
+  for (let i = start; i < ME22_aiTabSteps.length; i++) {
+    ME22_aiTabIndex = i;
+    const row = ME22_aiTabSteps[i];
+    const input = i > start || start > 0 ? ME22_aiTabOutput(ME22_aiTabSteps[i - 1].key) : "";
+    const ok = await ME22_aiTabRunStep(row, input);
+    if (ok === false && row.editorStep) {
+      ME22_aiTabSetRunState("stopped at " + row.label + " - see the log");
+      return;
+    }
+    if (ME22_aiTabModelConnected()) {
+      const verdict = await ME22_pluginJudge(row.label, { output: ME22_aiTabOutput(row.key) });
+      if (verdict != null) ME22_aiLog("AI tab judge after " + row.label + ": " + (typeof verdict === "string" ? verdict : JSON.stringify(verdict)));
+    }
+    if (ME22_aiTabMode() === "step-by-step" && i < ME22_aiTabSteps.length - 1) {
+      ME22_aiTabWaiting = true;
+      ME22_aiTabSetState(row.key, ME22_aiTabOutput(row.key) ? "done - waiting for your word" : "waiting for your word");
+      ME22_aiTabSetRunState("step by step - stopped after " + row.label + " for your word: go on, edit the gate field, or redo");
+      ME22_aiLog("AI tab: step by step stops after " + row.label + " for your word. Edit the step output in its gate field and press Go on - the edited output is what the next step receives - or press Redo this step.");
+      return;
+    }
+  }
+  ME22_aiTabIndex = ME22_aiTabSteps.length - 1;
+  ME22_aiTabSetRunState("run finished");
+  ME22_aiLog("AI tab run finished in " + mode + " mode. Hand edits in the gate fields stand as the outputs the next steps received.");
+}
+function ME22_aiTabRun() { return ME22_aiTabRunFrom(0); }
+function ME22_aiTabContinue(key) {
+  if (key === "polish" && window.ME22_polishLoopResume) {
+    const resumePolishLoop = window.ME22_polishLoopResume;
+    window.ME22_polishLoopResume = null;
+    ME22_aiTabWaiting = false;
+    ME22_aiTabSetRunState("continuing the polish loop");
+    resumePolishLoop();
+    return;
+  }
+  const i = ME22_aiTabSteps.findIndex(s => s.key === key);
+  if (i < 0) return;
+  ME22_aiTabWaiting = false;
+  ME22_aiTabSetRunState("continuing after " + ME22_aiTabSteps[i].label);
+  return ME22_aiTabRunFrom(i + 1);
+}
+function ME22_aiTabRedo(key) {
+  const i = ME22_aiTabSteps.findIndex(s => s.key === key);
+  if (i < 0) return;
+  ME22_aiTabWaiting = false;
+  return ME22_aiTabRunFrom(i);
+}
+window.ME22_showAiTab = ME22_showAiTab;
+window.ME22_aiTabMode = ME22_aiTabMode;
+window.ME22_aiTabSteps = ME22_aiTabSteps;
+window.ME22_aiTabOutput = ME22_aiTabOutput;
+window.ME22_aiTabSetOutput = ME22_aiTabSetOutput;
+window.ME22_aiTabNextInput = ME22_aiTabNextInput;
+window.ME22_aiTabRun = ME22_aiTabRun;
+window.ME22_aiTabContinue = ME22_aiTabContinue;
+window.ME22_aiTabRedo = ME22_aiTabRedo;
+window.ME22_aiTabSyncModelState = ME22_aiTabSyncModelState;
+(function ME22_aiTabWire() {
+  const tabBtn = $("aiTabBtn");
+  if (tabBtn) tabBtn.addEventListener("click", () => ME22_showAiTab(true));
+  const edBtn = $("aiTabEditorBtn");
+  if (edBtn) edBtn.addEventListener("click", () => ME22_showAiTab(false));
+  const runBtn = $("aiTabRunBtn");
+  if (runBtn) runBtn.addEventListener("click", () => { ME22_showAiTab(true); ME22_aiTabRun(); });
+  document.querySelectorAll("[data-ai-tab-go]").forEach(b =>
+    b.addEventListener("click", () => ME22_aiTabContinue(b.dataset.aiTabGo)));
+  document.querySelectorAll("[data-ai-tab-redo]").forEach(b =>
+    b.addEventListener("click", () => ME22_aiTabRedo(b.dataset.aiTabRedo)));
+  ME22_aiTabSyncModelState();
+})();
 function ME22_runAll() { return ME22_runChainFrom("make3d"); }
 function ME22_rerunFrom(step) { return ME22_runChainFrom(step); }
 window.ME22_runAll = ME22_runAll;
@@ -4670,7 +5878,449 @@ function ME22_moreDetailed() {
   return ME22_aiStep("detail");
 }
 window.ME22_moreDetailed = ME22_moreDetailed;
-async function ME22_applyDetail() {
+/* ---------------- Bit 13: part-by-part generation - parsers and job helpers (Finish Plan V3 step #12, pipeline P3, piece 2a) ----------------
+   Modelled literally on ME22_parseDetailMap
+   (Bit 12): gate text in, a parsed record or null
+   out, and prose refused plainly - a line that is
+   not a plausible part name fails the whole parse,
+   as the detail parser's explicit-weight rule
+   refuses prose, so a description never parses as
+   a list. ME22_parsePartsList reads a parts list
+   (JSON {"parts": [...]} or a bare array, or one
+   part name per line). ME22_parsePlacementMap
+   reads placement text on the same pattern (one
+   part per line as Name: x, y, z, or JSON),
+   carrying the per-part targets, the reference
+   joint positions (lines "ref <joint>: x, y, z" or
+   "joint <name> <partA> <partB>: x, y, z"), and
+   the body height (a "Height: <n>" line). Piece 2a
+   lands the parsers and the generation loop only;
+   the placement branch that consumes this map is
+   piece 2b. ME22_runPartJobs runs ONE job per part
+   in list order through ME22_bit9DescriptionChain
+   with out_name Part_<Name>_V1.GLB, logs one
+   ME22_aiLog line per job in the form
+   "Part job N of M: <Name> - <output>", records
+   window.ME22_lastGeneration, and stops the run
+   at a failed job, named.
+   Source: Kevin, original work (V22 Bit 13,
+   2026-11-19). */
+function ME22_partNameOk(name) {
+  const n = String(name == null ? "" : name).trim();
+  if (!n || n.length > 40) return false;
+  if (!/^[A-Za-z][A-Za-z0-9_-]*(?:[ \t]+[A-Za-z0-9_-]+){0,2}$/.test(n)) return false;
+  const prose = ["the", "a", "an", "and", "or", "of", "with", "is", "are", "has", "have", "on", "in", "to", "for", "it", "its", "this", "that"];
+  return !n.split(/[ \t]+/).some(w => prose.indexOf(w.toLowerCase()) >= 0);
+}
+window.ME22_partNameOk = ME22_partNameOk;
+function ME22_parsePartsList(text) {
+  const raw = String(text == null ? "" : text).trim();
+  if (!raw) return null;
+  if (raw.charAt(0) === "{" || raw.charAt(0) === "[") {
+    try {
+      const obj = JSON.parse(raw);
+      const arr = Array.isArray(obj) ? obj : (obj && Array.isArray(obj.parts) ? obj.parts : null);
+      if (!arr || !arr.length) return null;
+      const parts = [];
+      for (const p of arr) {
+        const nm = typeof p === "string" ? p.trim() : String((p && p.name) || "").trim();
+        if (!ME22_partNameOk(nm)) return null;
+        parts.push(nm);
+      }
+      return parts.length ? { parts } : null;
+    } catch (e) { return null; }
+  }
+  const parts = [];
+  for (const chunk of raw.split(/[\n;]+/)) {
+    for (let tok of chunk.split(",")) {
+      tok = tok.trim().replace(/^\d+[.)]\s*/, "").replace(/^[-*]\s*/, "").trim();
+      if (!tok) continue;
+      if (!ME22_partNameOk(tok)) return null;
+      parts.push(tok);
+    }
+  }
+  return parts.length ? { parts } : null;
+}
+window.ME22_parsePartsList = ME22_parsePartsList;
+function ME22_parseVec3(text) {
+  const bits = String(text == null ? "" : text).split(",").map(s => s.trim()).filter(s => s !== "");
+  if (bits.length !== 3) return null;
+  const v = bits.map(Number);
+  return v.every(n => Number.isFinite(n)) ? v : null;
+}
+window.ME22_parseVec3 = ME22_parseVec3;
+function ME22_parsePlacementMap(text) {
+  const raw = String(text == null ? "" : text).trim();
+  if (!raw) return null;
+  if (raw.charAt(0) === "{") {
+    try {
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+      const targets = {};
+      const tsrc = obj.targets || obj.placements || {};
+      for (const k of Object.keys(tsrc)) {
+        if (!ME22_partNameOk(k)) return null;
+        const v = Array.isArray(tsrc[k]) ? tsrc[k].map(Number) : null;
+        if (!v || v.length !== 3 || !v.every(n => Number.isFinite(n))) return null;
+        targets[k] = v;
+      }
+      const joints = {};
+      const jsrc = obj.joints || obj.reference_joints || obj.refs || {};
+      for (const k of Object.keys(jsrc)) {
+        const j = jsrc[k] || {};
+        const refArr = Array.isArray(j) ? j : (j.ref || j.position || j.at);
+        const v = Array.isArray(refArr) ? refArr.map(Number) : null;
+        if (!v || v.length !== 3 || !v.every(n => Number.isFinite(n))) return null;
+        const jp = Array.isArray(j.parts) ? j.parts.map(s => String(s).trim()) : null;
+        if (jp && !jp.every(nm => ME22_partNameOk(nm))) return null;
+        joints[k] = { parts: jp, ref: v };
+      }
+      let bodyHeight = obj.body_height != null ? Number(obj.body_height) : (obj.bodyHeight != null ? Number(obj.bodyHeight) : (obj.height != null ? Number(obj.height) : null));
+      if (bodyHeight != null && !Number.isFinite(bodyHeight)) return null;
+      if (!Object.keys(targets).length && !Object.keys(joints).length && bodyHeight == null) return null;
+      return { targets, joints, bodyHeight };
+    } catch (e) { return null; }
+  }
+  const targets = {};
+  const joints = {};
+  let bodyHeight = null;
+  for (const lineRaw of raw.split(/[\n;]+/)) {
+    const line = lineRaw.trim();
+    if (!line) continue;
+    let m = line.match(/^(?:body[ _]?height|height)\s*[:=]\s*([0-9]*\.?[0-9]+)\s*$/i);
+    if (m) { bodyHeight = Number(m[1]); continue; }
+    m = line.match(/^joint\s+([A-Za-z][A-Za-z0-9_-]*)\s+(\S+)\s+(\S+)\s*[:=]\s*(.+)$/i);
+    if (m) {
+      const v = ME22_parseVec3(m[4]);
+      if (!v || !ME22_partNameOk(m[2]) || !ME22_partNameOk(m[3])) return null;
+      joints[m[1]] = { parts: [m[2], m[3]], ref: v };
+      continue;
+    }
+    m = line.match(/^(?:ref|joint)\s+([A-Za-z][A-Za-z0-9_-]*)\s*[:=]\s*(.+)$/i);
+    if (m) {
+      const v = ME22_parseVec3(m[2]);
+      if (!v) return null;
+      joints[m[1]] = { parts: null, ref: v };
+      continue;
+    }
+    m = line.match(/^(.+?)\s*[:=]\s*(.+)$/);
+    if (m && ME22_partNameOk(m[1].trim())) {
+      const v = ME22_parseVec3(m[2]);
+      if (!v) return null;
+      targets[m[1].trim()] = v;
+      continue;
+    }
+    return null;
+  }
+  if (!Object.keys(targets).length && !Object.keys(joints).length && bodyHeight == null) return null;
+  return { targets, joints, bodyHeight };
+}
+window.ME22_parsePlacementMap = ME22_parsePlacementMap;
+function ME22_partsListFromGateOrInput(input) {
+  const gated = ME22_parsePartsList(ME22_aiTabOutput("parts"));
+  if (gated) return { parts: gated.parts, source: "gate" };
+  const fromInput = ME22_parsePartsList(input || "");
+  if (fromInput) return { parts: fromInput.parts, source: "input" };
+  return null;
+}
+window.ME22_partsListFromGateOrInput = ME22_partsListFromGateOrInput;
+function ME22_generationSignature(subject, parts) {
+  return String(subject || "") + "\n" + parts.join("\n");
+}
+window.ME22_generationSignature = ME22_generationSignature;
+var ME22_lastGenerationSig = "";
+function ME22_generationOutputsText(rec) {
+  if (!rec || !rec.jobs) return "";
+  return rec.jobs.map(j => j.part + " - " + j.output).join("\n");
+}
+window.ME22_generationOutputsText = ME22_generationOutputsText;
+async function ME22_runPartJobs(subject, parts) {
+  const jobs = [];
+  window.ME22_lastGeneration = { subject: subject, parts: parts.slice(), jobs: jobs, failed: 0 };
+  ME22_lastGenerationSig = ME22_generationSignature(subject, parts);
+  for (let i = 0; i < parts.length; i++) {
+    const name = parts[i];
+    const outName = "Part_" + name.replace(/[^A-Za-z0-9]+/g, "_") + "_V1.GLB";
+    let ok = false;
+    try {
+      const out = await ME22_bit9DescriptionChain(name + " of " + (subject || "the named subject"), null, outName);
+      ok = !!out && !out.error;
+    } catch (e) {
+      ok = false;
+      ME22_aiLog("AI tab: the picture-to-3D chain failed for part " + name + ": " + e.message);
+    }
+    jobs.push({ part: name, output: outName, ok: ok });
+    ME22_aiLog("Part job " + (i + 1) + " of " + parts.length + ": " + name + " - " + outName);
+    if (!ok) {
+      window.ME22_lastGeneration.failed = 1;
+      ME22_aiLog("AI tab: generation stopped at part " + name + " (job " + (i + 1) + " of " + parts.length + ") - the run stops at that part, named.");
+      return false;
+    }
+  }
+  window.ME22_lastGeneration.failed = 0;
+  return true;
+}
+window.ME22_runPartJobs = ME22_runPartJobs;
+
+/* ---------------- Bit 13 piece 2b: placement branch and rigging-help record (Finish Plan V3 step #12, pipeline P3) ----------------
+   ME22_runPlacement is the placement stage the tab
+   runner's placement branch calls, on the Bit 12
+   Detail-branch precedent: for each part of the
+   generation record, in list order, it fetches the
+   job's GLB through the bridge file road (the
+   ME22_loadModel road: GET /file?path= on the
+   bridge), adds it with ME22_addAlongsideGLB under
+   the part's own name, moves it with
+   ME22_moveAlongside to the target
+   ME22_parsePlacementMap read from the Placement
+   gate field, and records the placed transform in
+   window.ME22_lastPlacement; ME22_saveCombined is
+   the stage finish, and its part names and byte
+   size are read into the placement gate field as
+   the stage output. The machinery places each part
+   exactly where it is told - the targets come from
+   the gate field - and no language-model placement
+   choice is claimed (prep B2).
+   ME22_runRigHelp is the rigging-help record: a
+   new small section BESIDE Step_Rig - Step_Rig and
+   the paper rig surface stay untouched, because
+   Step_Rig's contract is the 2D paper set (prep
+   B3). From the placed parts' bounding boxes in
+   the combined model (window.ME22_alongsideBox)
+   and the joint list (the placement gate field's
+   joint section, carried in the placement record;
+   where it names none, each part after the first
+   joins the first part, standing as its parent),
+   each joint is computed at the overlap centre of
+   the two joined parts' boxes: per axis the point
+   is (max of the two mins + min of the two maxes)
+   / 2, which is the centre of the intersection box
+   where the boxes intersect, and the midpoint of
+   the closest faces where they do not - stated
+   plainly here and in the Rigging row text, never
+   silently. The record lands in window.ME22_lastRig
+   and in the rigging gate field, one line per
+   joint (name, the two parts, x, y, z).
+   Source: Kevin, original work (V22 Bit 13,
+   2026-11-19). */
+function ME22_placeLog(text) {
+  if (typeof ME22_aiLog === "function") ME22_aiLog(text);
+}
+function ME22_fmtVec(v) {
+  return v.map(n => String(Math.round(Number(n) * 10000) / 10000)).join(", ");
+}
+window.ME22_fmtVec = ME22_fmtVec;
+function ME22_partGlbPath(output) {
+  try {
+    const list = (typeof ME22_models !== "undefined" && Array.isArray(ME22_models)) ? ME22_models : [];
+    const hit = list.find(m => m && m.name === output && m.path);
+    if (hit) return hit.path;
+  } catch (e) { /* the Models list is not readable here; the roads below stand */ }
+  const glb = (typeof ME22_aiGlb === "function") ? ME22_aiGlb() : "";
+  if (glb && typeof ME22_baseName === "function" && ME22_baseName(glb) === output) return glb;
+  return output;
+}
+window.ME22_partGlbPath = ME22_partGlbPath;
+async function ME22_runPlacement(input) {
+  // Piece G (2026-11-19): the whole run stands under
+  // the placement-time rendering contract's hold -
+  // acquired before the first fetch and released in
+  // the finally on every exit, so the accumulating
+  // placed parts are never repainted during the run
+  // and the combined save at its end is covered by
+  // the same hold. Source:
+  // Lane_Record_Bit13_PieceF_V1.TXT.
+  if (window.ME22_beginRenderHold) window.ME22_beginRenderHold();
+  try {
+  const rec = (typeof window !== "undefined" && window.ME22_lastGeneration) || null;
+  const found = ME22_partsListFromGateOrInput(input || "");
+  const parts = (rec && Array.isArray(rec.parts) && rec.parts.length) ? rec.parts.slice()
+    : (found ? found.parts.slice() : null);
+  if (!parts || !parts.length) {
+    ME22_placeLog("AI tab: placement not run - no parts list stands in the Parts listing gate field and no generation record stands, and the tab claims nothing.");
+    return false;
+  }
+  const jobs = (rec && Array.isArray(rec.jobs) && rec.jobs.length) ? rec.jobs
+    : parts.map(name => ({ part: name, output: "Part_" + name.replace(/[^A-Za-z0-9]+/g, "_") + "_V1.GLB", ok: true }));
+  const map = ME22_parsePlacementMap(ME22_aiTabOutput("placement")) || ME22_parsePlacementMap(input || "");
+  if (!map || !map.targets || !Object.keys(map.targets).length) {
+    ME22_placeLog("AI tab: placement not run - the Placement gate field holds no parseable placement targets (one line per part as Name: x, y, z), and the tab claims nothing.");
+    return false;
+  }
+  const placed = [];
+  for (const name of parts) {
+    const target = map.targets[name];
+    if (!target) {
+      ME22_placeLog("AI tab: placement stopped at part " + name + " - the Placement gate field names no target for it.");
+      return false;
+    }
+    const job = jobs.find(j => j && j.part === name) || { part: name, output: "Part_" + name.replace(/[^A-Za-z0-9]+/g, "_") + "_V1.GLB" };
+    const path = ME22_partGlbPath(job.output);
+    let blob = null;
+    try {
+      const base = (typeof ME22_bridgeBase === "function") ? ME22_bridgeBase() : "";
+      const r = await fetch(base + "/file?path=" + encodeURIComponent(path));
+      if (!r.ok) {
+        ME22_placeLog("AI tab: placement stopped at part " + name + " - the bridge file road answered " + r.status + " for " + path + ".");
+        return false;
+      }
+      blob = await r.blob();
+    } catch (e) {
+      ME22_placeLog("AI tab: placement stopped at part " + name + " - the bridge file road failed for " + path + ": " + e.message);
+      return false;
+    }
+    const entry = await window.ME22_addAlongsideGLB(URL.createObjectURL(blob), name);
+    if (!entry) {
+      ME22_placeLog("AI tab: placement stopped at part " + name + " - the alongside add did not land (the 3D view must stand open).");
+      return false;
+    }
+    if (!window.ME22_moveAlongside(entry.id, target)) {
+      ME22_placeLog("AI tab: placement stopped at part " + name + " - the alongside move did not land.");
+      return false;
+    }
+    const at = entry.group && entry.group.position && typeof entry.group.position.toArray === "function"
+      ? entry.group.position.toArray() : target.slice();
+    placed.push({ part: name, output: job.output, target: target.slice(), placed: at.slice() });
+    ME22_placeLog("AI tab: placed part " + name + " at " + ME22_fmtVec(at) + " (target " + ME22_fmtVec(target) + ") - " + job.output + ".");
+  }
+  const combined = await window.ME22_saveCombined();
+  if (!combined || !window.ME22_lastCombinedBuffer) {
+    ME22_placeLog("AI tab: placement placed every part but the combined save did not produce a GLB - see the Alongside status.");
+    return false;
+  }
+  const subject = (rec && rec.subject) || (($("aiTabSubject") && $("aiTabSubject").value.trim()) || "");
+  window.ME22_lastPlacement = { subject: subject, parts: parts.slice(), placed: placed,
+    combined: { names: combined.names.slice(), count: combined.count, bytes: combined.bytes }, map: map };
+  const lines = placed.map(p => p.part + " placed at " + ME22_fmtVec(p.placed) + " - " + p.output);
+  lines.push("Combined save: " + combined.count + " model(s) - " + combined.names.join(" + ") + " (" + combined.bytes + " bytes)");
+  ME22_placeLog("AI tab: placement done - " + placed.length + " part(s) placed and the combined save stands (" + combined.bytes + " bytes).");
+  return lines.join("\n");
+  } finally {
+    if (window.ME22_endRenderHold) window.ME22_endRenderHold();
+  }
+}
+window.ME22_runPlacement = ME22_runPlacement;
+function ME22_rigPointForBoxes(a, b) {
+  const pt = [];
+  for (let i = 0; i < 3; i++) {
+    const lo = Math.max(a.min[i], b.min[i]);
+    const hi = Math.min(a.max[i], b.max[i]);
+    pt.push((lo + hi) / 2);
+  }
+  return pt;
+}
+window.ME22_rigPointForBoxes = ME22_rigPointForBoxes;
+function ME22_rigJointSpecs(map, parts) {
+  const specs = [];
+  if (map && map.joints) {
+    for (const name of Object.keys(map.joints)) {
+      const j = map.joints[name];
+      if (j && Array.isArray(j.parts) && j.parts.length === 2) specs.push({ name: name, parts: [j.parts[0], j.parts[1]] });
+    }
+  }
+  if (specs.length) return specs;
+  for (let i = 1; i < parts.length; i++) specs.push({ name: "joint_" + parts[i], parts: [parts[i], parts[0]] });
+  return specs;
+}
+window.ME22_rigJointSpecs = ME22_rigJointSpecs;
+function ME22_runRigHelp(input) {
+  const rec = (typeof window !== "undefined" && window.ME22_lastGeneration) || null;
+  const found = ME22_parsePartsList(ME22_aiTabOutput("parts"));
+  const parts = (rec && Array.isArray(rec.parts) && rec.parts.length) ? rec.parts.slice()
+    : (found ? found.parts.slice() : null);
+  if (!parts || parts.length < 2) {
+    ME22_placeLog("AI tab: rigging help not run - no parts list of two or more parts stands, and the tab claims nothing.");
+    return false;
+  }
+  const lastPlace = (typeof window !== "undefined" && window.ME22_lastPlacement) || null;
+  const map = (lastPlace && lastPlace.map) || ME22_parsePlacementMap(ME22_aiTabOutput("placement")) || ME22_parsePlacementMap(input || "");
+  const boxFn = (typeof window !== "undefined") ? window.ME22_alongsideBox : null;
+  if (typeof boxFn !== "function") {
+    ME22_placeLog("AI tab: rigging help not run - the placed-part box reader does not stand, and the tab claims nothing.");
+    return false;
+  }
+  const boxes = {};
+  for (const name of parts) {
+    const b = boxFn(name);
+    if (!b) {
+      ME22_placeLog("AI tab: rigging help not run - part " + name + " has no placed box in the combined model; run Placement first.");
+      return false;
+    }
+    boxes[name] = b;
+  }
+  const specs = ME22_rigJointSpecs(map, parts);
+  const joints = [];
+  for (const s of specs) {
+    if (!boxes[s.parts[0]] || !boxes[s.parts[1]]) {
+      ME22_placeLog("AI tab: rigging help stopped at joint " + s.name + " - one of its parts has no placed box.");
+      return false;
+    }
+    joints.push({ name: s.name, parts: [s.parts[0], s.parts[1]], point: ME22_rigPointForBoxes(boxes[s.parts[0]], boxes[s.parts[1]]) });
+  }
+  const subject = (rec && rec.subject) || (lastPlace && lastPlace.subject) || "";
+  window.ME22_lastRig = { subject: subject, joints: joints, bodyHeight: map ? map.bodyHeight : null };
+  const lines = joints.map(j => j.name + ": " + j.parts[0] + " + " + j.parts[1] + " at " + ME22_fmtVec(j.point));
+  ME22_placeLog("AI tab: rigging help done - " + joints.length + " joint(s) at the placed parts overlap centres, written to window.ME22_lastRig and the rigging gate field.");
+  return lines.join("\n");
+}
+window.ME22_runRigHelp = ME22_runRigHelp;
+
+/* ---------------- Bit 12: detail intelligence (Finish Plan V3 step #11, pipeline P1 and P2) ----------------
+   Section rewritten whole (2026-11-19, the fix
+   rule): the standing ME22_applyDetail read only
+   the triSlider and never consumed the AI tab
+   Detail row's gate input - the gate text was
+   logged by the tab runner and ignored. This
+   section replaces it: a detail map parsed from
+   gate text (JSON, or one part per line as
+   Name: weight) is consumed by the detail step,
+   and the slider total goes to the bridge as the
+   whole-model budget (budget_triangles), split
+   across the model's parts bridge-side with the
+   summed readback as the verdict. The slider is
+   the budget's one source - the tab reads the
+   same value the Detail panel sets. A budget the
+   bridge reports parity-blocked (an odd difference
+   from the model's total, which no watertight
+   model can land on exactly) is named plainly and
+   never claimed exact.
+   Source: Kevin, original work (V22 Bit 12,
+   2026-11-19). */
+function ME22_parseDetailMap(text) {
+  const raw = String(text == null ? "" : text).trim();
+  if (!raw) return null;
+  if (raw.charAt(0) === "{") {
+    try {
+      const obj = JSON.parse(raw);
+      if (obj && Array.isArray(obj.parts)) {
+        const parts = obj.parts.map(p => ({ name: String(p.name || "").trim(), weight: Number(p.weight == null ? 1 : p.weight) })).filter(p => p.name);
+        return parts.length ? { parts } : null;
+      }
+      const parts = Object.keys(obj).map(k => ({ name: k, weight: Number(obj[k]) }));
+      return parts.length ? { parts } : null;
+    } catch (e) { return null; }
+  }
+  const parts = [];
+  for (const line of raw.split(/[\n;]+/)) {
+    const m = line.trim().match(/^(.+?)\s*[:=]\s*([0-9]*\.?[0-9]+)\s*$/) || line.trim().match(/^(.+?)\s+([0-9]*\.?[0-9]+)\s*$/);
+    if (m && m[1].trim()) parts.push({ name: m[1].trim(), weight: Number(m[2]) });
+  }
+  return parts.length ? { parts } : null;
+}
+window.ME22_parseDetailMap = ME22_parseDetailMap;
+function ME22_detailGateText() {
+  const el = document.getElementById("aiTabOut_detail");
+  return el ? el.value : "";
+}
+window.ME22_detailGateText = ME22_detailGateText;
+function ME22_detailPartsText(rows) {
+  if (!rows || !rows.length) return "parts: -";
+  let summed = 0;
+  const bits = rows.map(r => { summed += Number(r.output_triangles || 0); return r.name + " " + Number(r.input_triangles || 0).toLocaleString("en-US") + " -> " + Number(r.output_triangles || 0).toLocaleString("en-US"); });
+  return "parts: " + bits.join(", ") + "; summed readback " + summed.toLocaleString("en-US") + " triangles";
+}
+window.ME22_detailPartsText = ME22_detailPartsText;
+async function ME22_applyDetail(gateText) {
   const st = document.getElementById("detailStatus");
   const sl = document.getElementById("triSlider");
   const target = sl ? Number(sl.value) : 0;
@@ -4680,12 +6330,23 @@ async function ME22_applyDetail() {
     ME22_aiLog("Detail: no GLB yet - run Make the 3D model first, or set the GLB file path in the Ai inputs.");
     return false;
   }
-  if (st) st.textContent = "Detail: running - target " + target.toLocaleString("en-US") + " triangles...";
+  const gate = gateText != null ? String(gateText) : ME22_detailGateText();
+  const detailMap = ME22_parseDetailMap(gate);
+  if (st) st.textContent = "Detail: running - whole-model budget " + target.toLocaleString("en-US") + " triangles" + (detailMap ? ", detail map: " + detailMap.parts.map(p => p.name + " x" + p.weight).join(", ") : "") + "...";
   try {
-    const out = await ME22_bridgeStepLogged("detail", ME22_stepParams({ glb, target_triangles: target }));
+    const params = { glb, target_triangles: target, budget_triangles: target };
+    if (detailMap) params.detail_map = detailMap;
+    const out = await ME22_bridgeStepLogged("detail", ME22_stepParams(params));
+    window.ME22_lastDetail = out;
     if (out && out.refused) {
       if (st) st.textContent = out.reason || "Detail refused: the detail step does not carry skinning.";
       return true;
+    }
+    if (out && out.parity_blocked) {
+      const near = out.achievable_neighbours ? " The nearest budgets a watertight model lands on exactly are " + out.achievable_neighbours.join(" and ") + "." : "";
+      if (st) st.textContent = "Detail: budget " + target.toLocaleString("en-US") + " cannot land exactly on this model - " + (out.reason || "the budget parity blocks an exact watertight landing") + near + " The model is unchanged.";
+      ME22_aiLog("Detail: parity-blocked budget " + target + " - no exact watertight landing exists; the model is unchanged.");
+      return false;
     }
     if (!out || !out.glb) {
       if (st) st.textContent = "Detail: the step returned no GLB - see the log.";
@@ -4701,9 +6362,16 @@ async function ME22_applyDetail() {
     if (window.ME22_addModel) ME22_addModel({ name, kind: "made-3d", path: out.glb });
     await ME22_openGLB(new File([blob], name, { type: "model/gltf-binary" }));
     const now = ME22_detailTriangles();
-    if (st) st.textContent = "Detail: " + Number(out.input_triangles || 0).toLocaleString("en-US") + " -> " + now.toLocaleString("en-US") + " triangles (target " + target.toLocaleString("en-US") + "), watertight: " + (out.watertight ? "yes" : "see the step log") + (out.stitch_pass !== undefined ? ", stitch " + (out.stitch_pass ? "PASS" : "FAILED") + " - seam mismatches " + out.seam_mismatches : "");
-    ME22_aiLog("Detail done: reloaded " + name + " - the page reads " + now + " triangles (target " + target + ").");
-    return now === target;
+    const partsEl = document.getElementById("detailParts");
+    let summed = null;
+    if (out.per_part && out.per_part.length) {
+      summed = Number(out.output_triangles);
+      if (partsEl) partsEl.textContent = ME22_detailPartsText(out.per_part);
+    }
+    const exact = summed != null ? summed === target : now === target;
+    if (st) st.textContent = "Detail: " + Number(out.input_triangles || 0).toLocaleString("en-US") + " -> " + (summed != null ? summed : now).toLocaleString("en-US") + " triangles (whole-model budget " + target.toLocaleString("en-US") + "), summed readback " + (summed != null ? summed.toLocaleString("en-US") : "n/a") + (exact ? " - matches the budget exactly" : " - does not match the budget, see the step log") + ", watertight: " + (out.watertight ? "yes" : "see the step log") + (out.stitch_pass !== undefined ? ", stitch " + (out.stitch_pass ? "PASS" : "FAILED") + " - seam mismatches " + out.seam_mismatches : "");
+    ME22_aiLog("Detail done: reloaded " + name + " - summed readback " + (summed != null ? summed : now) + " triangles against the whole-model budget " + target + (exact ? " (exact)." : " (NOT exact)."));
+    return exact;
   } catch (e) {
     if (st) st.textContent = "Detail failed: " + e.message;
     ME22_aiLog("Detail failed: " + e.message);
@@ -4723,6 +6391,640 @@ window.ME22_applyDetail = ME22_applyDetail;
 </script>
 
 <script>
+/* V22 Bit 14 (Finish Plan V3 step #13, pipeline
+   P4): the coloring road. ME22_parseColorSpec
+   reads the Coloring row's gate field into
+   { colors: [{name, color, rgb}] } - JSON form
+   ({"colors": [{"name": ..., "color":
+   "#c8a165"}, ...]}, or a bare name-to-color
+   object) or one part per line ("Head: #c8a165"
+   or "Head: 200, 161, 101"); a line that is not
+   a part name with a color refuses the whole
+   parse, so prose never drives a run.
+   ME22_applyColoring sends the parsed
+   specification to the bridge color step once
+   (Color_Engine_V1.PY through Step_Color): the
+   engine writes COLOR_0 for every vertex of
+   each named part and reads the written GLB
+   back per part, and that read-back is the
+   verdict. A part the model does not carry is
+   refused plainly by name and nothing is
+   written; the result reloads through the
+   bridge file road. After a coloring run the
+   colored output goes to the plugin judge
+   (P4): with a plugin connected its verdict is
+   logged; with none, the standing no-plugin
+   judge line stands and no verdict is claimed.
+   Source: Kevin, original work (V22 Bit 14,
+   2026-11-20); the parser, gate reader, parts
+   text and apply shapes are the Bit 12 Detail
+   graft's (ME22_parseDetailMap,
+   ME22_detailGateText, ME22_detailPartsText,
+   ME22_applyDetail), copied in pattern. */
+function ME22_colorValue(color) {
+  if (Array.isArray(color)) {
+    if (color.length !== 3) return null;
+    const nums = color.map(Number);
+    if (nums.some(n => !isFinite(n) || n < 0)) return null;
+    let rgb = null;
+    if (nums.every(n => n <= 1)) rgb = nums.map(n => Math.round(n * 255));
+    else if (nums.every(n => Number.isInteger(n) && n <= 255)) rgb = nums.slice();
+    else return null;
+    return { rgb, hex: "#" + rgb.map(n => n.toString(16).padStart(2, "0")).join("") };
+  }
+  const s = String(color == null ? "" : color).trim();
+  const hex = s.match(/^#([0-9a-fA-F]{6})$/) || s.match(/^#([0-9a-fA-F]{3})$/);
+  if (hex) {
+    let h = hex[1].toLowerCase();
+    if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    return { rgb: [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)), hex: "#" + h };
+  }
+  const trip = s.match(/^([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})$/);
+  if (trip) {
+    const rgb = [Number(trip[1]), Number(trip[2]), Number(trip[3])];
+    if (rgb.some(n => n > 255)) return null;
+    return { rgb, hex: "#" + rgb.map(n => n.toString(16).padStart(2, "0")).join("") };
+  }
+  return null;
+}
+window.ME22_colorValue = ME22_colorValue;
+function ME22_parseColorSpec(text) {
+  const raw = String(text == null ? "" : text).trim();
+  if (!raw) return null;
+  const one = (name, color) => {
+    const n = String(name == null ? "" : name).trim();
+    const c = ME22_colorValue(color);
+    return (n && c) ? { name: n, color: c.hex, rgb: c.rgb } : null;
+  };
+  if (raw.charAt(0) === "{") {
+    try {
+      const obj = JSON.parse(raw);
+      if (obj && Array.isArray(obj.colors)) {
+        const colors = obj.colors.map(p => one(p && p.name, p && p.color)).filter(Boolean);
+        return colors.length && colors.length === obj.colors.length ? { colors } : null;
+      }
+      const keys = obj ? Object.keys(obj) : [];
+      const colors = keys.map(k => one(k, obj[k])).filter(Boolean);
+      return colors.length && colors.length === keys.length ? { colors } : null;
+    } catch (e) { return null; }
+  }
+  if (raw.charAt(0) === "[") {
+    try {
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return null;
+      const colors = arr.map(p => one(p && p.name, p && p.color)).filter(Boolean);
+      return colors.length && colors.length === arr.length ? { colors } : null;
+    } catch (e) { return null; }
+  }
+  const colors = [];
+  for (const line of raw.split(/[\n;]+/)) {
+    const t = line.trim();
+    if (!t) continue;
+    const m = t.match(/^(.+?)\s*[:=]\s*(.+)$/);
+    if (!m) return null;
+    const entry = one(m[1], m[2]);
+    if (!entry) return null;
+    colors.push(entry);
+  }
+  return colors.length ? { colors } : null;
+}
+window.ME22_parseColorSpec = ME22_parseColorSpec;
+function ME22_colorGateText() {
+  const el = document.getElementById("aiTabOut_coloring");
+  return el ? el.value : "";
+}
+window.ME22_colorGateText = ME22_colorGateText;
+function ME22_colorPartsText(rows) {
+  if (!rows || !rows.length) return "colors: -";
+  const bits = rows.filter(r => r.color).map(r => r.name + " " + r.color + " on " + Number(r.vertices || 0).toLocaleString("en-US") + " vertices");
+  return "colors: " + (bits.length ? bits.join(", ") : "-") + "; read back from the written GLB";
+}
+window.ME22_colorPartsText = ME22_colorPartsText;
+async function ME22_applyColoring(gateText) {
+  const glb = ME22_aiGlb();
+  if (!glb) {
+    ME22_aiLog("Coloring: no GLB yet - run Make the 3D model first, or set the GLB file path in the Ai inputs.");
+    return false;
+  }
+  const gate = gateText != null ? String(gateText) : ME22_colorGateText();
+  const spec = ME22_parseColorSpec(gate);
+  if (!spec) {
+    ME22_aiLog("Coloring: the gate field holds no color specification the parser accepts - one part per line, Name: #rrggbb or Name: red, green, blue, or JSON; prose never drives a run. Nothing was colored.");
+    return false;
+  }
+  try {
+    const out = await ME22_bridgeStepLogged("color", ME22_stepParams({ glb, color_spec: spec }));
+    window.ME22_lastColoring = out;
+    if (out && out.refused) {
+      ME22_aiLog("Coloring refused: " + (out.reason || "the color step refused the run."));
+      return false;
+    }
+    if (!out || !out.glb) {
+      ME22_aiLog("Coloring: the step returned no GLB - see the log.");
+      return false;
+    }
+    const r = await fetch(ME22_bridgeBase() + "/file?path=" + encodeURIComponent(out.glb));
+    if (!r.ok) {
+      ME22_aiLog("Coloring: the result could not be reloaded - the bridge file road answered " + r.status + ".");
+      return false;
+    }
+    const blob = await r.blob();
+    const name = ME22_baseName(out.glb);
+    if (window.ME22_addModel) ME22_addModel({ name, kind: "made-3d", path: out.glb });
+    await ME22_openGLB(new File([blob], name, { type: "model/gltf-binary" }));
+    const verdict = await ME22_pluginJudge("Coloring", out);
+    if (verdict != null) ME22_aiLog("Coloring judge: " + (typeof verdict === "string" ? verdict : JSON.stringify(verdict)));
+    ME22_aiLog("Coloring done: reloaded " + name + " - " + ME22_colorPartsText(out.per_part) + ".");
+    return true;
+  } catch (e) {
+    ME22_aiLog("Coloring failed: " + e.message);
+    return false;
+  }
+}
+window.ME22_applyColoring = ME22_applyColoring;
+</script>
+
+<script>
+/* V22 Bit 14 (Finish Plan V3 step #13, pipeline
+   P5): the polish loop machinery.
+   ME22_parsePolishRounds reads the Polish row's
+   gate field into { rounds: [{budget,
+   detail_map, references}] } - JSON form
+   ({"rounds": [{"budget": N, "detail_map":
+   {...}, "references": ["name", ...]}, ...]})
+   or one round per line ("Round: budget N;
+   Head: 1; Ref: <name>"); every round must
+   carry a budget, and a round without one, or
+   prose, refuses the whole parse, so prose
+   never drives a run. ME22_runPolishLoop drives
+   the bridge detail step - the standing
+   Detail_Budget_Engine, unchanged - round over
+   round against the current GLB: each round
+   lands on its budget exactly where parity
+   allows, its per-part read-back from the
+   written GLB is appended to
+   window.ME22_lastPolish, and one log line per
+   round names its references and its resulting
+   counts. In step by step mode the loop stops
+   after each round for Solomon's word; on Go on
+   it re-parses the gate field's current text,
+   so a hand edit at the stop is the next round's
+   direction. A parity-blocked or refused round
+   stops the loop at that round, named, with the
+   engine's reason in the log - never a silent
+   skip. After each round the round record goes
+   to the plugin judge (P5): with a plugin
+   connected its verdict is logged and a finish
+   verdict stops the loop at that judged finish;
+   with none, the standing no-plugin judge line
+   stands and the loop runs the specification's
+   rounds out - no judged finish is claimed.
+   The references are names carried into the
+   log verbatim; no road fetches an online
+   reference, and none is claimed to.
+   Source: Kevin, original work (V22 Bit 14,
+   2026-11-20); the parser, gate reader, rounds
+   text and loop shapes are the Bit 12 Detail
+   graft's (ME22_parseDetailMap,
+   ME22_detailGateText, ME22_detailPartsText,
+   ME22_applyDetail) and the Bit 14 coloring
+   graft's (ME22_parseColorSpec,
+   ME22_applyColoring), copied in pattern. */
+function ME22_parsePolishRounds(text) {
+  const raw = String(text == null ? "" : text).trim();
+  if (!raw) return null;
+  const oneMap = dm => {
+    if (dm == null) return null;
+    if (typeof dm === "string") return ME22_parseDetailMap(dm);
+    try { return ME22_parseDetailMap(JSON.stringify(dm)); } catch (e) { return null; }
+  };
+  const oneRound = (budget, detailMap, references) => {
+    const b = Number(budget);
+    if (!isFinite(b) || b <= 0) return null;
+    return { budget: Math.round(b), detail_map: detailMap || null,
+      references: (references || []).map(r => String(r == null ? "" : r).trim()).filter(Boolean) };
+  };
+  if (raw.charAt(0) === "{") {
+    try {
+      const obj = JSON.parse(raw);
+      if (!obj || !Array.isArray(obj.rounds) || !obj.rounds.length) return null;
+      const rounds = [];
+      for (const r of obj.rounds) {
+        if (!r || r.budget == null) return null;
+        let dm = null;
+        if (r.detail_map != null) { dm = oneMap(r.detail_map); if (!dm) return null; }
+        const refs = r.references == null ? [] : (Array.isArray(r.references) ? r.references : [r.references]);
+        const round = oneRound(r.budget, dm, refs);
+        if (!round) return null;
+        rounds.push(round);
+      }
+      return rounds.length ? { rounds } : null;
+    } catch (e) { return null; }
+  }
+  const rounds = [];
+  for (const line of raw.split(/\n+/)) {
+    const t = line.trim();
+    if (!t) continue;
+    const segs = t.split(";").map(s => s.trim()).filter(Boolean);
+    if (!segs.length) return null;
+    const head = segs[0].match(/^Round\s*(?:\d+\s*)?:\s*budget\s+([0-9]+)\s*$/i);
+    if (!head) return null;
+    const references = [];
+    const mapLines = [];
+    let bad = false;
+    for (const seg of segs.slice(1)) {
+      const ref = seg.match(/^Ref\s*:\s*(.+)$/i);
+      if (ref) { references.push(ref[1].trim()); continue; }
+      if (/^[A-Za-z][A-Za-z ]*\s*:/.test(seg) && !/:\s*[0-9]/.test(seg)) { bad = true; break; }
+      mapLines.push(seg);
+    }
+    if (bad) return null;
+    let dm = null;
+    if (mapLines.length) { dm = ME22_parseDetailMap(mapLines.join("\n")); if (!dm) return null; }
+    const round = oneRound(Number(head[1]), dm, references);
+    if (!round) return null;
+    rounds.push(round);
+  }
+  return rounds.length ? { rounds } : null;
+}
+window.ME22_parsePolishRounds = ME22_parsePolishRounds;
+function ME22_polishGateText() {
+  const el = document.getElementById("aiTabOut_polish");
+  return el ? el.value : "";
+}
+window.ME22_polishGateText = ME22_polishGateText;
+function ME22_polishRoundsText(records) {
+  if (!records || !records.length) return "rounds: -";
+  const lines = records.map(r => {
+    if (r.parity_blocked) return "round " + r.round + ": budget " + Number(r.budget || 0).toLocaleString("en-US") + " - parity blocked, the model is unchanged (" + (r.reason || "no exact watertight landing") + ")";
+    if (r.refused) return "round " + r.round + ": budget " + Number(r.budget || 0).toLocaleString("en-US") + " - refused (" + (r.reason || "the detail step refused the round") + ")";
+    return "round " + r.round + ": budget " + Number(r.budget || 0).toLocaleString("en-US") + " - " + ME22_detailPartsText(r.per_part) + "; references: " + (r.references && r.references.length ? r.references.join(", ") : "none named");
+  });
+  return lines.join("\n");
+}
+window.ME22_polishRoundsText = ME22_polishRoundsText;
+function ME22_polishVerdictFinished(verdict) {
+  if (verdict == null) return false;
+  if (typeof verdict === "string") return /\bfinish(ed)?\b/i.test(verdict);
+  return verdict.finished === true || verdict.finish === true ||
+    /\bfinish(ed)?\b/i.test(String(verdict.verdict || verdict.status || ""));
+}
+window.ME22_polishVerdictFinished = ME22_polishVerdictFinished;
+async function ME22_runPolishLoop(gateText) {
+  const glb = ME22_aiGlb();
+  if (!glb) {
+    ME22_aiLog("Polish: no GLB yet - run Make the 3D model first, or set the GLB file path in the Ai inputs.");
+    return false;
+  }
+  const gate = gateText != null ? String(gateText) : ME22_polishGateText();
+  let spec = ME22_parsePolishRounds(gate);
+  if (!spec) {
+    ME22_aiLog("Polish: the gate field holds no round specification the parser accepts - one round per line, Round: budget N with detail weights (Name: weight) and Ref: names, or JSON; every round carries a budget and prose never drives a run. Nothing was polished.");
+    return false;
+  }
+  window.ME22_lastPolish = [];
+  let current = glb;
+  let idx = 0;
+  while (idx < spec.rounds.length) {
+    const round = spec.rounds[idx];
+    const n = idx + 1;
+    const refs = round.references && round.references.length ? round.references.join(", ") : "none named";
+    try {
+      const params = { glb: current, target_triangles: round.budget, budget_triangles: round.budget };
+      if (round.detail_map) params.detail_map = round.detail_map;
+      const out = await ME22_bridgeStepLogged("detail", ME22_stepParams(params));
+      if (out && out.refused) {
+        window.ME22_lastPolish.push({ round: n, budget: round.budget, references: round.references || [], refused: true, reason: out.reason || "the detail step refused the round" });
+        ME22_aiLog("Polish round " + n + " refused: " + (out.reason || "the detail step refused the round") + " - the loop stops at this round, named; no later round runs and the model stands as the last landed round left it.");
+        return false;
+      }
+      if (out && out.parity_blocked) {
+        const near = out.achievable_neighbours ? " The nearest budgets a watertight model lands on exactly are " + out.achievable_neighbours.join(" and ") + "." : "";
+        window.ME22_lastPolish.push({ round: n, budget: round.budget, references: round.references || [], parity_blocked: true, reason: out.reason || "the budget parity blocks an exact watertight landing", achievable_neighbours: out.achievable_neighbours || null });
+        ME22_aiLog("Polish round " + n + " stopped - parity blocked: budget " + round.budget.toLocaleString("en-US") + " cannot land exactly on this model - " + (out.reason || "the budget parity blocks an exact watertight landing") + "." + near + " The model is unchanged by this round and the loop stops at this round, named - never a silent skip.");
+        return false;
+      }
+      if (!out || !out.glb) {
+        ME22_aiLog("Polish round " + n + ": the detail step returned no GLB - the loop stops here; the rounds that landed stand in the record.");
+        return false;
+      }
+      const r = await fetch(ME22_bridgeBase() + "/file?path=" + encodeURIComponent(out.glb));
+      if (!r.ok) {
+        ME22_aiLog("Polish round " + n + ": the result could not be reloaded - the bridge file road answered " + r.status + ". The loop stops here.");
+        return false;
+      }
+      const blob = await r.blob();
+      const name = ME22_baseName(out.glb);
+      if (window.ME22_addModel) ME22_addModel({ name, kind: "made-3d", path: out.glb });
+      await ME22_openGLB(new File([blob], name, { type: "model/gltf-binary" }));
+      current = out.glb;
+      const record = { round: n, budget: round.budget, detail_map: round.detail_map || null,
+        per_part: out.per_part || [], output_triangles: out.output_triangles,
+        references: round.references || [], glb: out.glb };
+      window.ME22_lastPolish.push(record);
+      ME22_aiLog("Polish round " + n + ": budget " + round.budget.toLocaleString("en-US") + " - " + ME22_detailPartsText(out.per_part) + "; references: " + refs + ".");
+      const verdict = await ME22_pluginJudge("Polish round " + n, record);
+      if (verdict != null) {
+        ME22_aiLog("Polish round " + n + " judge: " + (typeof verdict === "string" ? verdict : JSON.stringify(verdict)));
+        if (ME22_polishVerdictFinished(verdict)) {
+          ME22_aiLog("Polish loop: the judge's verdict ends round " + n + " as the finish - the loop stops at that judged finish.");
+          return true;
+        }
+      }
+    } catch (e) {
+      ME22_aiLog("Polish round " + n + " failed: " + e.message + " - the loop stops here; the rounds that landed stand in the record.");
+      return false;
+    }
+    idx += 1;
+    if (ME22_aiTabMode() === "step-by-step" && idx < spec.rounds.length) {
+      ME22_aiTabSetState("polish", "round " + n + " done - waiting for your word");
+      ME22_aiTabSetRunState("step by step - polish loop stopped after round " + n + " for your word: edit the round entries in the Polish gate field and press Go on - the field as edited is the next round's direction");
+      ME22_aiLog("AI tab: the polish loop stops after round " + n + " for your word. Edit the round entries in the Polish gate field and press Go on - on Go on the loop re-reads the field, and the edited entries are the rounds it runs next.");
+      ME22_aiTabWaiting = true;
+      await new Promise(res => { window.ME22_polishLoopResume = res; });
+      window.ME22_polishLoopResume = null;
+      ME22_aiTabWaiting = false;
+      const reparsed = ME22_parsePolishRounds(ME22_polishGateText());
+      if (!reparsed) {
+        ME22_aiLog("Polish: at the round stop the gate field no longer reads as a round specification - the loop stops here; the rounds that ran stand in the record and in the model.");
+        return true;
+      }
+      spec = reparsed;
+      if (idx < spec.rounds.length) {
+        ME22_aiLog("Polish: resumed on the gate field as edited - round " + (idx + 1) + " runs at budget " + spec.rounds[idx].budget.toLocaleString("en-US") + " as the field now stands.");
+      }
+    }
+  }
+  const last = window.ME22_lastPolish[window.ME22_lastPolish.length - 1];
+  ME22_aiLog("Polish loop done: " + window.ME22_lastPolish.length + " round(s) ran - final summed readback " + (last && last.output_triangles != null ? Number(last.output_triangles).toLocaleString("en-US") : "n/a") + " triangles.");
+  return true;
+}
+window.ME22_runPolishLoop = ME22_runPolishLoop;
+</script>
+
+<script>
+/* V22 Bit 15 (Finish Plan V3 step #14, pipeline
+   P8): the task splitter. ME22_parseChunkSpec
+   reads a chunk specification into { task,
+   direction: { budget, detail_map }, chunks:
+   [{ name, device }] } - JSON form ({"task":
+   "detail", "direction": {"budget": N,
+   "detail_map": {...}}, "chunks": [{"name":
+   ..., "device": ...}, ...]}) or line form (a
+   "Task: detail; Budget: N" line carrying the
+   direction, then one chunk per line: "Chunk:
+   Head; Device: Pup"). The task shape is the
+   one every tab step shares - the step's input
+   GLB plus its gate-field direction - with the
+   Detail row's budget run as the driven task:
+   the direction is a whole-model budget and an
+   optional detail map. A chunk without a name,
+   a chunk without a device, a specification
+   without a budget, or prose refuses the whole
+   parse, so prose never drives a run.
+   ME22_applyChunking sends the parsed
+   specification and the run's device table to
+   the bridge chunk_task step once
+   (Chunk_Task_Engine_V1.PY through
+   Step_Chunk_Task): the engine cuts one payload
+   per named part, places each payload under a
+   transfer manifest built by the estate torrent
+   transfer layer's own Piece 1 module, applies
+   the assignment rule - capability first, then
+   fastest measured route, then load, the
+   Cluster Switch's standing rule - and records
+   the chunk ledger; one log line per chunk
+   names its size and its assigned device. A
+   chunk naming a device the run does not hold
+   is refused plainly by name by the engine,
+   never silently rerouted. The bridge step is
+   named "chunk_task", never "torrent": the
+   standing torrent step is Bit 2's local mesh
+   sectioning on this machine, a different thing
+   that shares the word. Nothing is chained into
+   the session in this piece - stitching the
+   returned chunks into the step's output is a
+   later piece's road, and no judge verdict is
+   claimed over an unstitched split.
+   Source: Kevin, original work (V22 Bit 15,
+   2026-11-20); the parser, gate reader, ledger
+   text and apply shapes are the Bit 12 Detail
+   graft's (ME22_parseDetailMap,
+   ME22_detailGateText, ME22_detailPartsText,
+   ME22_applyDetail), the Bit 14 coloring
+   graft's (ME22_parseColorSpec,
+   ME22_applyColoring) and the Bit 14 polish
+   graft's (ME22_parsePolishRounds), copied in
+   pattern. */
+function ME22_parseChunkSpec(text) {
+  const raw = String(text == null ? "" : text).trim();
+  if (!raw) return null;
+  const oneMap = dm => {
+    if (dm == null) return null;
+    if (typeof dm === "string") return ME22_parseDetailMap(dm);
+    try { return ME22_parseDetailMap(JSON.stringify(dm)); } catch (e) { return null; }
+  };
+  const finish = (task, budget, detailMap, chunks) => {
+    const t = String(task == null ? "" : task).trim();
+    const b = Number(budget);
+    if (!t || !isFinite(b) || b <= 0) return null;
+    if (!chunks.length) return null;
+    const seen = {};
+    for (const c of chunks) { if (seen[c.name]) return null; seen[c.name] = true; }
+    return { task: t, direction: { budget: Math.round(b), detail_map: detailMap || null }, chunks };
+  };
+  if (raw.charAt(0) === "{") {
+    try {
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj.task !== "string") return null;
+      const dir = obj.direction;
+      if (!dir || dir.budget == null) return null;
+      let dm = null;
+      if (dir.detail_map != null) { dm = oneMap(dir.detail_map); if (!dm) return null; }
+      if (!Array.isArray(obj.chunks) || !obj.chunks.length) return null;
+      const chunks = [];
+      for (const c of obj.chunks) {
+        const name = String(c && c.name != null ? c.name : "").trim();
+        const device = String(c && c.device != null ? c.device : "").trim();
+        if (!name || !device) return null;
+        chunks.push({ name, device });
+      }
+      return finish(obj.task, dir.budget, dm, chunks);
+    } catch (e) { return null; }
+  }
+  const lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  if (!lines.length) return null;
+  const head = lines[0].match(/^Task\s*:\s*([^;]+?)\s*(?:;\s*(.*))?$/i);
+  if (!head) return null;
+  const taskName = head[1].trim();
+  if (!/^[A-Za-z0-9_-]+$/.test(taskName)) return null;
+  let budget = null;
+  const mapLines = [];
+  if (head[2]) {
+    for (const seg of head[2].split(";").map(s => s.trim()).filter(Boolean)) {
+      const b = seg.match(/^Budget\s*:\s*([0-9]+)\s*$/i);
+      if (b) { budget = Number(b[1]); continue; }
+      if (/^[A-Za-z][A-Za-z ]*\s*:/.test(seg) && !/:\s*[0-9]/.test(seg)) return null;
+      mapLines.push(seg);
+    }
+  }
+  let dm = null;
+  if (mapLines.length) { dm = ME22_parseDetailMap(mapLines.join("\n")); if (!dm) return null; }
+  const chunks = [];
+  for (const line of lines.slice(1)) {
+    const m = line.match(/^Chunk\s*:\s*([^;]+?)\s*;\s*Device\s*:\s*(.+?)\s*$/i);
+    if (!m) return null;
+    chunks.push({ name: m[1].trim(), device: m[2].trim() });
+  }
+  return finish(taskName, budget, dm, chunks);
+}
+window.ME22_parseChunkSpec = ME22_parseChunkSpec;
+function ME22_chunkGateText() {
+  const el = document.getElementById("aiTabOut_detail");
+  return el ? el.value : "";
+}
+window.ME22_chunkGateText = ME22_chunkGateText;
+function ME22_chunkLedgerText(rows) {
+  if (!rows || !rows.length) return "chunks: -";
+  const bits = rows.map(r => r.name + " " + Number(r.size || 0).toLocaleString("en-US") + " bytes to " + r.device + " (target " + Number(r.target_triangles || 0).toLocaleString("en-US") + ")");
+  return "chunks: " + bits.join(", ") + "; each ledgered under its transfer manifest";
+}
+window.ME22_chunkLedgerText = ME22_chunkLedgerText;
+async function ME22_applyChunking(gateText, devices) {
+  const glb = ME22_aiGlb();
+  if (!glb) {
+    ME22_aiLog("Chunking: no GLB yet - run Make the 3D model first, or set the GLB file path in the Ai inputs.");
+    return false;
+  }
+  const gate = gateText != null ? String(gateText) : ME22_chunkGateText();
+  const spec = ME22_parseChunkSpec(gate);
+  if (!spec) {
+    ME22_aiLog("Chunking: the gate field holds no chunk specification the parser accepts - JSON ({\"task\": \"detail\", \"direction\": {\"budget\": N, \"detail_map\": {...}}, \"chunks\": [{\"name\": ..., \"device\": ...}]}) or lines (Task: detail; Budget: N, then Chunk: Name; Device: name per line); every chunk names a part and a device, and prose never drives a run. Nothing was cut.");
+    return false;
+  }
+  const table = devices || window.ME22_chunkDevices || null;
+  if (!table) {
+    ME22_aiLog("Chunking: no device table stands for this run - window.ME22_chunkDevices is not set, so the run holds no devices and no chunk can be assigned. Nothing was cut.");
+    return false;
+  }
+  try {
+    const out = await ME22_bridgeStepLogged("chunk_task", ME22_stepParams({ glb, chunk_spec: spec, devices: table }));
+    window.ME22_lastChunking = out;
+    if (out && out.refused) {
+      ME22_aiLog("Chunking refused: " + (out.reason || "the chunk task step refused the run."));
+      return false;
+    }
+    if (!out || !out.chunks || !out.chunks.length) {
+      ME22_aiLog("Chunking: the step returned no chunk ledger - see the log.");
+      return false;
+    }
+    for (const c of out.chunks) {
+      ME22_aiLog("Chunk " + (Number(c.index || 0) + 1) + ": " + c.name + " - " + Number(c.size || 0).toLocaleString("en-US") + " bytes assigned to " + c.device + "; manifest whole-hash " + String(c.whole_sha256 || "").slice(0, 16) + ".");
+    }
+    ME22_aiLog("Chunking done: " + ME22_chunkLedgerText(out.chunks) + ". Ledger: " + out.ledger + ".");
+    return true;
+  } catch (e) {
+    ME22_aiLog("Chunking failed: " + e.message);
+    return false;
+  }
+}
+window.ME22_applyChunking = ME22_applyChunking;
+</script>
+<script>
+// Stitch the returned chunks of one chunked task into the step's whole output
+// and prove it equal to the single-device output (Bit 15 piece 2c,
+// Prep_Bit15_V1.TXT section 7, E1-E3). The collection, the stitch and the
+// equality run bridge-side in the chunk_stitch step (Chunk_Stitch_Engine_V1.PY);
+// this apply hands it the ledger the chunking apply recorded
+// (window.ME22_lastChunking.ledger, or the path given) and the folder the chunk
+// returns stand in (the argument, or the page's standing
+// window.ME22_chunkResults - no folder is invented page-side, on the chunking
+// apply's device-table precedent). A run whose chunks are not all returned yet
+// is not a failure: the step returns the ledger's resume state, and this apply
+// logs each missing chunk as the resume list - the returned chunks stand held
+// verified and are never re-executed; the resume is the missing chunks'
+// executor runs and this apply again. On a passed stitch the step's output
+// chains into the session by the chunk_stitch case in ME22_chainOutputs (the
+// torrent case's stitch_pass rule, copied) inside ME22_bridgeStepLogged, and
+// this apply reloads the stitched model so the editor stands on it. No judge
+// call stands here: the judge of the stitched whole rides the plugin road
+// (ME22_pluginJudge), and no plugin stands in the driven gate (the prep's
+// honesty layer L3).
+// Source: Kevin, original work (V22 Bit 15 piece 2c); the shape is
+// ME22_applyChunking's and ME22_applyColoring's in this file, copied in pattern.
+function ME22_stitchLedgerText(rows) {
+  if (!rows || !rows.length) { return "chunks: -"; }
+  var bits = [];
+  var summed = 0;
+  for (var i = 0; i < rows.length; i++) {
+    bits.push(rows[i].name + " " + rows[i].triangles + " triangles from " + rows[i].device);
+    summed += rows[i].triangles;
+  }
+  return "chunks: " + bits.join(", ") + "; summed readback " + summed.toLocaleString("en-US") + " triangles";
+}
+async function ME22_applyChunkStitch(resultsFolder, ledgerPath) {
+  try {
+    var ledger = ledgerPath || (window.ME22_lastChunking && window.ME22_lastChunking.ledger);
+    if (!ledger) {
+      ME22_aiLog("Chunk stitching refused: no chunk ledger stands - run the chunking first (its ledger is what the stitch collects).");
+      return false;
+    }
+    var folder = resultsFolder || window.ME22_chunkResults;
+    if (!folder) {
+      ME22_aiLog("Chunk stitching refused: no results folder is named - the returns are collected from the folder the executors wrote them into; name it or set window.ME22_chunkResults.");
+      return false;
+    }
+    var out = await ME22_bridgeStepLogged("chunk_stitch", ME22_stepParams({ ledger: ledger, results_folder: folder }));
+    window.ME22_lastStitch = out;
+    if (!out) {
+      ME22_aiLog("Chunk stitching failed: the bridge returned nothing.");
+      return false;
+    }
+    if (out.refused) {
+      ME22_aiLog("Chunk stitching refused: " + (out.reason || "the stitch engine refused"));
+      return false;
+    }
+    if (out.incomplete) {
+      var miss = out.missing || [];
+      for (var m = 0; m < miss.length; m++) {
+        ME22_aiLog("Chunk still out: " + miss[m].name + " (device " + miss[m].device + ") - the resume list, read from the ledger.");
+      }
+      ME22_aiLog("Chunk stitching incomplete: " + miss.length + " chunk(s) have no return standing; the returned chunks are held verified and are never re-executed - run the missing chunks and stitch again.");
+      return false;
+    }
+    if (!out.glb) {
+      ME22_aiLog("Chunk stitching failed: the stitch step returned no model.");
+      return false;
+    }
+    if (!out.stitch_pass) {
+      var eq0 = out.equality || {};
+      ME22_aiLog("Chunk stitching failed its equality gate: the stitched output does not stand equal to the single-device output (maximum position difference " + eq0.max_position_difference + ", geometry " + String(eq0.geometry_sha256 || "").slice(0, 12) + " against " + String(eq0.single_geometry_sha256 || "").slice(0, 12) + ") - nothing chained.");
+      return false;
+    }
+    var rows = out.chunks || [];
+    for (var r = 0; r < rows.length; r++) {
+      ME22_aiLog("Chunk returned: " + rows[r].name + " from " + rows[r].device + " - " + rows[r].triangles + " triangles against target " + rows[r].target_triangles + ", whole sha256 " + String(rows[r].output_whole_sha256 || "").slice(0, 12) + ", both-sides close agreed.");
+    }
+    var url = ME22_bridgeBase() + "/file?path=" + encodeURIComponent(out.glb);
+    var resp = await fetch(url);
+    if (!resp.ok) { ME22_aiLog("Chunk stitching reload failed: " + resp.status + " for " + out.glb); return false; }
+    var blob = await resp.blob();
+    var nm = ME22_baseName(out.glb);
+    ME22_addModel(nm, out.glb);
+    await ME22_openGLB(new File([blob], nm, { type: "model/gltf-binary" }));
+    if (ME22_detailTriangles() !== out.triangles) { ME22_aiLog("Chunk stitching reload failed: the editor does not stand on the stitched model (it reads " + ME22_detailTriangles() + " triangles, the stitch carries " + out.triangles + ")."); return false; }
+    var eq = out.equality || {};
+    ME22_aiLog("Chunk stitching done: " + ME22_stitchLedgerText(rows) + "; stitched output equal to the single-device output (per-part read-backs exact, maximum position difference " + eq.max_position_difference + ", geometry sha256 " + String(eq.geometry_sha256 || "").slice(0, 12) + "); the editor stands at " + ME22_detailTriangles().toLocaleString("en-US") + " triangles.");
+    return true;
+  } catch (e) {
+    ME22_aiLog("Chunk stitching failed: " + e.message);
+    return false;
+  }
+}
+window.ME22_applyChunkStitch = ME22_applyChunkStitch;
+</script>
+
+<script>
 // V22 Bit 2: Torrent sections (elements 4 and 11,
 // issue 46). The Sections panel above runs one named
 // operation on the open model by torrent sections:
@@ -4739,9 +7041,12 @@ window.ME22_applyDetail = ME22_applyDetail;
 // bridge file road, the Models list's own road, only
 // when the step report's stitch pass passed; on a
 // stitch failure the line names the failure and the
-// open model is unchanged. Until Bit 7 wires the
-// plugin judging half in, the deterministic stitch
-// numbers alone gate the operation. Scope, declared
+// open model is unchanged. Since Bit 7 piece 2, a
+// finished operation's stitch report and rendered
+// views also go to the plugin judge when one is
+// connected, completing the final pass; the
+// deterministic stitch numbers still gate the
+// operation first. Scope, declared
 // in the panel too: the step carries geometry and
 // COLOR_0 only and does not carry skinning, so a
 // skinned model comes back refused and the stitch
@@ -4812,6 +7117,7 @@ async function ME22_runSections(opts) {
     await ME22_openGLB(new File([blob], name, { type: "model/gltf-binary" }));
     ME22_showStitch(out);
     ME22_aiLog("Sections done: reloaded " + name + " - " + ME22_stitchText(out));
+    await ME22_pluginJudgeTorrent(out);
     return true;
   } catch (e) {
     if (st) st.textContent = "Stitch: failed - " + e.message;
@@ -4820,6 +7126,195 @@ async function ME22_runSections(opts) {
   }
 }
 window.ME22_runSections = ME22_runSections;
+</script>
+
+<script>
+"use strict";
+/* Model Editor V22, Bit 3 (2026-11-18): the Brushes
+   panel's machinery - paint, erase and sculpt strokes
+   on the open 3D model, run as the bridge's brush
+   step (Step_Brush, which runs
+   V22_Prep_V1/Brushes_V1.PY). The mode switch and
+   the sculpt-only strength row follow the staged
+   module surface (V22_Prep_V1/Module_Surface_V1.HTML)
+   with the deviations named in the surgery program
+   that grafted this block. The stroke flow follows
+   ME22_runSections and ME22_applyDetail: the step
+   runs through ME22_bridgeStepLogged, the session
+   chaining takes the step's GLB, and the editor
+   reloads it through the bridge file road only when
+   the step did not refuse. The pristine copy: the
+   first stroke on a loaded model sends that model as
+   the erase reference and the step keeps its own
+   copy of it; the kept copy's path comes back in the
+   step's outputs and is what later strokes send, so
+   erase restores from the model as it was loaded,
+   before any brush stroke touched it. A different
+   model opening resets the record (step reloads are
+   guarded by ME22_BRUSH_RELOADING). Kevin, original
+   work; the module surface is Duke, original work. */
+let ME22_BRUSH_MODE = "paint";
+let ME22_BRUSH_ARMED = false;
+let ME22_BRUSH_DOWN = false;
+window.ME22_BRUSH_ORIGINAL = null;
+window.ME22_BRUSH_MODEL = null;
+window.ME22_BRUSH_CENTER = null;
+window.ME22_BRUSH_RELOADING = false;
+window.ME22_lastBrush = null;
+function ME22_setBrushMode(mode) {
+  ME22_BRUSH_MODE = mode;
+  document.querySelectorAll("[data-brush-mode]").forEach(b =>
+    b.setAttribute("aria-pressed", b.getAttribute("data-brush-mode") === mode ? "true" : "false"));
+  const row = document.getElementById("strengthRow");
+  if (row) row.style.display = mode === "sculpt" ? "" : "none";
+}
+window.ME22_setBrushMode = ME22_setBrushMode;
+function ME22_brushNoteOpen(name) {
+  if (window.ME22_BRUSH_RELOADING) return;
+  if (window.ME22_BRUSH_MODEL && window.ME22_BRUSH_MODEL !== name) {
+    window.ME22_BRUSH_ORIGINAL = null;
+    window.ME22_BRUSH_CENTER = null;
+    const line = document.getElementById("brushCentre");
+    if (line) line.textContent = "Centre: the model's centre until you pick one";
+  }
+  window.ME22_BRUSH_MODEL = name;
+}
+window.ME22_brushNoteOpen = ME22_brushNoteOpen;
+function ME22_brushDefaultCentre() {
+  return window.ME3D_centre ? window.ME3D_centre() : null;
+}
+function ME22_brushColour() {
+  const el = document.getElementById("paint-color");
+  if (!el || !el.value) return null;
+  const v = el.value;
+  return [parseInt(v.slice(1, 3), 16) / 255,
+          parseInt(v.slice(3, 5), 16) / 255,
+          parseInt(v.slice(5, 7), 16) / 255, 1];
+}
+function ME22_brushText(mode, out) {
+  if (out.refused) return "Brushes: " + (out.reason || "refused");
+  const r = out.report || {};
+  const tris = out.triangles != null ? Number(out.triangles).toLocaleString("en-US") : "?";
+  let text;
+  if (mode === "paint") {
+    text = "Paint: " + r.changed_vertices + " vertices coloured inside the brush falloff (" +
+      r.falloff_vertices + " in reach); the model now reads " + tris + " triangles";
+  } else if (mode === "erase") {
+    text = "Erase: " + r.restored_vertices + " of " + r.selected_vertices +
+      " selected vertices restored from the pristine copy; the model now reads " + tris + " triangles";
+  } else {
+    const val = r.validation || {}, sm = r.smoothness || {};
+    text = "Sculpt: " + (r.displaced_vertices_before_remesh || 0) + " vertices " +
+      (out.direction === "pull" ? "pulled" : "pushed") + ", remeshed to " + tris +
+      " triangles, watertight: " + (val.watertight ? "yes" : "no") +
+      ", max dihedral " + Math.round(sm.max_dihedral_degrees || 0) +
+      " degrees, jagged edges " + (sm.jagged_edges_over_120_degrees || 0);
+  }
+  if (out.stitch_pass != null) {
+    text += out.stitch_pass ? ", stitch PASS - seam mismatches " + out.seam_mismatches
+                            : ", stitch FAILED - seam mismatches " + out.seam_mismatches;
+  }
+  return text;
+}
+async function ME22_brushStroke(opts) {
+  opts = opts || {};
+  const mode = opts.mode || ME22_BRUSH_MODE;
+  const glb = ME22_aiGlb();
+  const status = document.getElementById("brushStatus");
+  const setStatus = t => { if (status) status.textContent = t; };
+  if (!glb) {
+    setStatus("Brushes: no GLB yet - set the GLB file path in the Ai inputs.");
+    ME22_aiLog("Brushes: no GLB yet - set the GLB file path in the Ai inputs.");
+    return false;
+  }
+  const centre = opts.center || window.ME22_BRUSH_CENTER || ME22_brushDefaultCentre();
+  if (!centre) {
+    setStatus("Brushes: no centre yet - open the model in the 3D view, or pick a centre on it.");
+    ME22_aiLog("Brushes: no centre yet - the 3D view holds no model to take the centre from.");
+    return false;
+  }
+  const num = (id, dflt) => { const el = document.getElementById(id);
+    const v = el ? parseFloat(el.value) : NaN; return isNaN(v) ? dflt : v; };
+  const params = ME22_stepParams({ glb: glb, mode: mode, center: centre,
+    size: opts.size != null ? opts.size : num("brushSize", 0.5),
+    hardness: opts.hardness != null ? opts.hardness : num("brushHardness", 0.35),
+    strength: opts.strength != null ? opts.strength : num("brushStrength", 0.3),
+    direction: opts.direction || (document.getElementById("brushDirection") || {}).value || "push",
+    sections: opts.sections != null ? opts.sections : 6 });
+  const colour = opts.colour || ME22_brushColour();
+  if (mode === "paint" && colour) params.colour = colour;
+  if (window.ME22_BRUSH_ORIGINAL) params.original = window.ME22_BRUSH_ORIGINAL;
+  if (opts.torrent_over != null) params.torrent_over = opts.torrent_over;
+  setStatus("Brushes: running the " + mode + " stroke on " + glb.split(/[\\/]/).pop() + " ...");
+  try {
+    const out = await ME22_bridgeStepLogged("brush", params);
+    window.ME22_lastBrush = out;
+    if (out.original) window.ME22_BRUSH_ORIGINAL = out.original;
+    setStatus(ME22_brushText(mode, out));
+    if (out.refused) { ME22_aiLog("Brushes refused: " + (out.reason || "")); return false; }
+    if (out.glb) {
+      const r = await fetch(ME22_bridgeBase() + "/file?path=" + encodeURIComponent(out.glb));
+      if (!r.ok) throw new Error("bridge file read " + r.status);
+      const blob = await r.blob();
+      await ME22_addModel(out.glb, "made");
+      window.ME22_BRUSH_RELOADING = true;
+      try {
+        await ME22_openGLB(new File([blob], out.glb.split(/[\\/]/).pop(), { type: "model/gltf-binary" }));
+      } finally { window.ME22_BRUSH_RELOADING = false; }
+    }
+    return true;
+  } catch (e) {
+    setStatus("Brushes failed: " + (e && e.message || e));
+    ME22_aiLog("Brushes failed: " + (e && e.message || e));
+    return false;
+  }
+}
+window.ME22_brushStroke = ME22_brushStroke;
+function ME22_brushPickAt(nx, ny) {
+  if (!window.ME3D_pick) return null;
+  const p = window.ME3D_pick(nx, ny);
+  if (!p) return null;
+  window.ME22_BRUSH_CENTER = p;
+  const line = document.getElementById("brushCentre");
+  if (line) line.textContent = "Centre: " + p[0].toFixed(3) + ", " + p[1].toFixed(3) + ", " +
+    p[2].toFixed(3) + " (picked on the model)";
+  return p;
+}
+window.ME22_brushPickAt = ME22_brushPickAt;
+(function ME22_brushSetup() {
+  document.querySelectorAll("[data-brush-mode]").forEach(b =>
+    b.addEventListener("click", () => ME22_setBrushMode(b.getAttribute("data-brush-mode"))));
+  ME22_setBrushMode("paint");
+  const pick = document.getElementById("brushPick");
+  if (pick) pick.addEventListener("click", () => {
+    ME22_BRUSH_ARMED = true;
+    pick.textContent = "Now click or drag on the model in the 3D view";
+  });
+  const apply = document.getElementById("brushApply");
+  if (apply) apply.addEventListener("click", () => { ME22_brushStroke(); });
+  const host = document.getElementById("gl3d");
+  if (host) {
+    const ndc = e => { const r = host.getBoundingClientRect();
+      return [((e.clientX - r.left) / r.width) * 2 - 1,
+              -((e.clientY - r.top) / r.height) * 2 + 1]; };
+    host.addEventListener("pointerdown", e => {
+      if (!ME22_BRUSH_ARMED) return;
+      ME22_BRUSH_DOWN = true;
+      const xy = ndc(e);
+      if (ME22_brushPickAt(xy[0], xy[1])) {
+        ME22_BRUSH_ARMED = false;
+        const pk = document.getElementById("brushPick");
+        if (pk) pk.textContent = "Pick centre on the model";
+      }
+    });
+    host.addEventListener("pointermove", e => {
+      if (!ME22_BRUSH_ARMED || !ME22_BRUSH_DOWN) return;
+      const xy = ndc(e);
+      ME22_brushPickAt(xy[0], xy[1]);
+    });
+    host.addEventListener("pointerup", () => { ME22_BRUSH_DOWN = false; });
+  }
+})();
 </script>
 </body>
 </html>
