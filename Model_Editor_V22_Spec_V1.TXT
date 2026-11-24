@@ -1,369 +1,439 @@
-Model Editor V22 - Bit 0: the base copy of Version 21
+Model Editor V22 - what Version 22 does
 ======================================================
 
-Bit 0 of the Version 22 Assembly Plan
-(V22_Assembly_Plan_V1.TXT), executed 2026-11-16 after
-Version 21 shipped (Open Work List item 3, DONE
-2026-11-16). The shipped Version 21 set is copied
-forward unmodified, names advanced: template to
-Model_Editor_V22_Template.HTML (by Surgery_V22.PY),
-builder to Build_Model_Editor_V22.PY, harness to
-Harness_V22.JS, and this spec. No feature is added,
-removed, or changed in Bit 0; the graft bits (1 to 9)
-add theirs in plan order, each proven before the
-next starts.
+This specification is rewritten whole at Finish Plan
+V3 step #15 (Bit 16, piece 2b), from the root spec it
+replaces. The root spec was written 2026-11-17 for
+the Assembly: it carried the Version 21 specification
+verbatim and recorded Bit 2 only, so it could not
+state what Version 22 does. This rewrite states it.
+Every claim below traces to a sealed step record -
+the Finish Plan V3 COMPLETE markings for steps #1
+to #13, the Bit 14 seal (step #13), and the Bit 15
+close record (step #14) - and the limits those
+records carry are stated here in plain words, not
+dropped. Where a proof ran with no plugin connected,
+this spec says so; nothing aspirational is stated
+as built.
 
-BASE IDENTITY (the copy source, recorded at graft
-time): Model_Editor_V21.HTML 9,044,286 bytes, MD5
-08b46820ded52b2e5bae5cecf17a21e9 - the file shipped
-to GitHub d9rectdesk/3D_Model_Editor and to Drive
-Ai_Programs on 2026-11-16.
+THE FILE
+--------
+Model_Editor_V22.HTML is one self-contained HTML
+file: 9,199,023 bytes, MD5
+0b07e0a42d8205e7ea60e1bfb6ad35de. It is Version 21's
+editor carried whole - every Version 21 feature
+stands in it - plus the fourteen steps of the
+Version 22 Finish Plan, grafted cumulatively bit by
+bit, each proven before the next started. The build
+census over the final built file counts 391 of 391
+markers present, missing []: the 174 Version 21
+markers (names advanced) and 217 markers the steps
+added. The editor is open source under the MIT
+License (LICENSE, carried unchanged from Version
+21's shipped copy). The standing product contract
+carries from Version 21 unaltered: custom tools
+built in; the Ai pipeline fully automated first,
+each step adjustable afterwards and re-running from
+that step; text fully visible, no scrollbars or
+slide bars hiding it, panels resizable; and all
+features requested carried in every version.
 
-THE CARRIED SPECIFICATION
--------------------------
-Everything below this line is the Version 21
-specification, carried verbatim: it states what the
-editor this version starts from does. Version 22's
-own changes are recorded bit by bit in the Version
-22 build log as they land, and this spec is
-rewritten whole at the Bit 10 ship gate.
+WHAT CARRIES FROM VERSION 21 (the base editor)
+----------------------------------------------
+- Per-point fill radius: selecting a joint point
+  shows a Fill radius row (slider, typed number
+  box, readout) whose range is centred on that
+  point's own radius, 20% to 180% of it, so a
+  wrist's slider tops out far below a hip's. The
+  fill circle is centred on the point's pin and
+  moves with it. Parts sharing one joint share
+  the joint's radius. A point with no radius set
+  shows the completion's computed default, marked
+  "(auto)".
+- Anatomical seeding: each joint's starting radius
+  is measured from the joint's own local part
+  width in the artwork - seed = round(1.42 x
+  width/2) + 4, minimum 12, nothing hard-coded per
+  joint name. Wrists and ankles measure smallest,
+  hips, shoulders, neck, waist and spine largest.
+- Persistence: radii live in the rig JSON
+  (disc_radius per joint), in the GLBs (node
+  extras and the top-level joints table), and in
+  the editor's save roads (GLB open and save, the
+  rig points file, undo snapshots).
+- The reveal bitmap wins over the disc: per joint,
+  the fill source is (1) the reveal bitmap - the
+  model's own rendered pixels from 5-degree pose
+  sweeps, composited - where one exists, and the
+  engine then draws no disc for that joint at
+  all; (2) the disc at the per-point radius, the
+  manual path. The written rig and census record
+  each joint's fill_source.
+- The four-view input set: the Ai flow presents
+  four pictures - front, back, left side, right
+  side, any order - and the pipeline's detection
+  names all four from the unordered set. A legacy
+  three-picture set still classifies.
+- Direction: 3D first, then paper. The automated
+  chain runs Make the 3D model -> Snapshots ->
+  Slice -> Redraw -> Rig it -> Make it paper, and
+  the paper is derived from the 3D.
 
-Model Editor V21 - what changed from V20, and the proof
-======================================================
-
-THE ASK (2026-11-16)
+THE VERSION 22 STEPS
 --------------------
-The redrawn man's 3D GLB was loaded in V20 and ruled
-"not acceptable as is": the completion discs around
-the joints (radius 486-534 px from the stage-2 circle
-redraw) are so large the assembled man reads as one
-blob. The fix: make the points' radius adjustable so
-the areas drawn to fill in can be made to look right
-manually - a slider with the radius for each point,
-the slider changing the circle's size, and the point
-placement changing the centre of the circle that fills
-in the areas. Refinement: all of the circles should
-not be the same size either - the wrists and the
-ankles would be some of the smallest, until fingers
-are added. Direction: the work is making it 3D first
-and then back to 2D paper.
-Then the fill-source ruling: where 3D sweep data
-exists, the fill is NOT a circle at all - it is a
-per-joint REVEAL BITMAP, the model's own rendered
-pixels from 5-degree pose sweeps, composited; the
-slider is the manual fallback where no bitmap exists.
-And the standing product contract: custom tools built
-in; the Ai pipeline fully automated first; each step
-adjustable afterwards, re-running from that step; a
-modern user-friendly format (text fully visible, no
-scrollbars or slide bars hiding it, panels resizable);
-and all features requested carried in every version.
-And the four-view standard (2026-11-16, on the
-SandBase multi-view benchmark's measured view-count
-economics - each added true view buys down error on
-the faces it reveals, and the second side is the one
-the doll set currently derives): the input set is
-FOUR pictures - front, back, left side, right side.
+1. TORRENT SECTIONS (Finish Plan #1). Heavy
+   operations route through Torrent_Sections_V1.PY
+   section by section, then a stitch pass runs
+   over the whole model. The Sections panel shows
+   the verdict: seam mismatches counted, the
+   watertight verdict, the triangle count against
+   the slider target, and the whole-model compare
+   (a sectioned run equals a whole run, maximum
+   difference 0.0 on a real model; a planted seam
+   offset is caught and named). An operation is
+   not reported done until the stitch pass says
+   so. Scope, declared in the panel too: the
+   torrent step carries geometry and COLOR_0
+   only - not skinning, animation or textures -
+   and a model with a skins array or JOINTS_0 /
+   WEIGHTS_0 attributes is refused with a plain
+   log line and the reason on the stitch line,
+   never silently stripped. The detail step and,
+   on large models, sculpt route through this
+   same route.
+2. BRUSHES (#2). The Brushes panel: paint writes
+   COLOR_0 inside the brush's hardness falloff
+   only; sculpt pushes or pulls along normals
+   with adaptive split and collapse; erase
+   restores only brush-selected edited vertices
+   from the pristine copy of the loaded GLB the
+   editor keeps on load. A sculpt is judged
+   against the model's own starting state: it is
+   refused when it ADDS jagged edges over the
+   model's baseline, not for roughness the model
+   already carries.
+3. FULL LAYERS IN THE PAPER STEPS (#3). After
+   slicing, the part layers run through
+   Full_Layers_V1.PY so every part runs past its
+   joint into the next part and each layer carries
+   the full area the part above can uncover; the
+   paper GLB is built from the completed set,
+   inputs untouched. The completion report (per
+   joint: worst uncovered count before, zero
+   after) is written into the run log. Proven at
+   zero revealed background on the man's parts and
+   on Duke's parts through the editor's own
+   pipeline. The per-point fill radius stays as
+   the manual fallback where no completion data
+   exists.
+4. AUTOMATIC RIG POINTS (#4). The rig step places
+   every automatic point at the centre of the
+   overlap zone of the two parts it joins. The
+   accuracy standard: trunk joints (neck,
+   shoulders, waist, hips) within 5 percent of
+   body height of the reference position; core
+   joint heights within 2 percent of body height.
+   Two named measured exceptions stand, asserted
+   by name in the suite with their measured
+   values, never silently: hips under
+   overlap-centre (the pelvis part is a large
+   blob, not the reference's pelvis disc, so its
+   thigh-overlap centroid sits mid-thigh; the hip
+   pins are governed by the trunk and height
+   tolerances, which they pass) and shoulder_f
+   under trunk and height (its far root is drawn
+   low; its pin is governed by the overlap-centre
+   tolerance, which it passes).
+5. THE WIRED RIG CODE (#5). The paper data comes
+   from the 2D views themselves: the 2D route
+   stands on its own, a 3D build is never a
+   required step, and the 3D sweep remains an
+   optional extra source where a model already
+   exists. Both #3's sweep test and #4's accuracy
+   test were re-run against the wired code's
+   output and pass.
+6. THE OPEN PLUGIN POINT (#6) - see THE PLUGIN
+   POINT'S TERMS below.
+7. MORE MODELS ALONGSIDE (#7). Loading a GLB
+   never replaces what is open: an added model is
+   placed in the 3D view the way rig points are
+   placed, moved to where it belongs, and its own
+   X and Y directions can be changed for that
+   object alone. The combined save holds both
+   models, and the first model is provably
+   untouched by the second's placement (its
+   source byte-identical by MD5 in the gate).
+8. EMOJI AND DESCRIPTION TO 3D (#8). An emoji is
+   drawn with the device's own emoji font, cut
+   out (BiRefNet through rembg, with the pinned
+   clean fallback; the BRIA session is never
+   pinned), and made 3D by the pipeline's
+   existing make-3D step. A description takes the
+   same road through the editor's own
+   picture-making, or through the plugin point's
+   expand when a plugin is connected. When the
+   making needs a view the image set does not
+   hold, the pipeline generates it and carries
+   on, and the run log names what was generated.
+   Every product of the chain lands in the Models
+   list and can be detailed, sectioned, brushed,
+   placed, and made paper. The Puppy Blender bake
+   proof stands in this step's record: texture
+   1024x1024, 574,765 of 591,049 island texels
+   observed (97.2 percent) across all four
+   cameras, sanity render IoU 1.0 - run on Puppy,
+   not on a stand-in.
+9. THE ANGLE DEGREES FIELD (#9). Beside the main
+   angle slider, and on each part row, a number
+   box: type a number, press Enter, the slider
+   goes to it and the model's angle matches it.
+   A change without Enter changes nothing; Enter
+   clamps to 180.
+10. THE AI TAB (#10). The tab holds the full
+    step table of the AI pipeline - eight rows
+    naming a best-fit model for every step:
+    detail, generation, placement, rigging,
+    coloring, polish among them. Each model is
+    wired only where the wiring stays fluid and
+    holds quality and accuracy; where it does
+    not, that step runs on Glimmer alone, Glimmer
+    being the standing fallback and judge. The
+    three run modes live in the tab: full auto,
+    where the models go through every step
+    themselves; step by step, where the AI stops
+    after each step for Solomon's word; and fully
+    manual, where Solomon does it himself. Every
+    step's output can be edited by hand in the
+    tab before the next step consumes it - a
+    manual gate at every step, and a hand edit in
+    a step's gate field is the exact input the
+    next step receives. With no model connected,
+    the tab says so plainly and claims nothing.
+11. DETAIL INTELLIGENCE (#11). The triangle
+    slider's total is a whole-model budget, split
+    across the model's parts by the detail map
+    written in the Detail row's gate field: a
+    named part gains detail, the rest stand, and
+    the parts sum to the budget exactly, read back
+    per part from the written GLB, watertight and
+    stitch-clean. THE PARITY RULE, stated plainly:
+    exactness holds only where the budget shares
+    the model's total parity - every watertight
+    move changes a closed part by an even count -
+    so a budget whose parity differs from the
+    model's total can never land exactly while
+    watertight; the engine reports it
+    parity_blocked with the neighbouring
+    achievable totals and writes nothing. JUDGE:
+    no plugin was connected in this step's proof,
+    so no judge ran and no verdict is claimed -
+    the hand-written gate-field map was the
+    direction.
+12. PART-BY-PART GENERATION (#12). The language
+    model generates every part one by one - parts
+    list first, then one job per part - then
+    helps place each part on #7's machinery and
+    rig it to #4's accuracy rule; the combined
+    model stands in the editor. CLAIM LIMITS, from
+    this step's seal: placement in the gate is
+    exactly where the gate field tells it - a
+    language model choosing placements is not
+    proven by this step; and the six gate parts
+    share one stand-in geometry, so no claim
+    about distinct part shapes stands. JUDGE: no
+    plugin was connected, so no judge ran and no
+    verdict is claimed.
+13. THE POLISH LOOP (#13). Coloring first: a
+    colour specification in the Coloring row's
+    gate field (part name and colour) is written
+    as COLOR_0 on every vertex of each named part
+    by the bridge "color" step and
+    Color_Engine_V1.PY, read back from the written
+    file; a part the model does not hold is
+    refused by name and nothing is written. Then
+    the polish loop: rounds of #11 refinement at
+    written per-round budgets, each round gated
+    in the tab, the triangle count rising per the
+    budget, the result watertight and
+    stitch-clean, colours standing in COLOR_0
+    through every round. In step by step mode the
+    loop stops after each round; a hand edit of
+    the next round in the gate field is the
+    direction it resumes on, and the edited
+    budget is the budget it lands on. LIMITS,
+    from this step's seal, stated plainly: no
+    plugin was connected in any run, so no judge
+    ran, no verdict is claimed, and NO JUDGED
+    FINISH is claimed - the loop stopped because
+    the written rounds are done. The references
+    are names only, written by hand into the
+    round specification and carried verbatim into
+    the run log (one reference line per round);
+    nothing was fetched or viewed online, and
+    ACTUAL ONLINE-REFERENCE USE REMAINS UNPROVEN
+    until a connected run on Puppy. A real judged
+    finish likewise remains unproven until a
+    connected run.
+14. CROSS-DEVICE TORRENT CHUNKING (#14). An AI
+    task from the tab is split into chunks as
+    small as needed for quality results: the page
+    parses a hand-written chunk specification and
+    refuses prose; the bridge "chunk_task" step
+    cuts one payload per chunk part and ledgers
+    each chunk under the Cluster Switch assignment
+    rule - capability first (a chunk naming a
+    device the run does not hold, or a device
+    without the driven step, is refused by name,
+    never silently rerouted), then fastest
+    measured route, then load. One executor
+    program, the same on every device, receives a
+    chunk under its manifest (per-chunk SHA-256
+    verified on arrival), executes it on its own
+    copy's bridge steps, and returns the output
+    under a fresh manifest; the bridge
+    "chunk_stitch" step collects the returns,
+    refuses a chunk set that does not cover every
+    input part by name, and stitches them in chunk
+    order. The stitched output equals the
+    single-device output three ways: per-part
+    read-backs exact (maximum position difference
+    0.0, faces and colours identical), geometry
+    SHA-256 equal, and the single-device file
+    rewritten through the same writer path
+    byte-identical to the stitched file. A device
+    dropping out mid-task loses no chunk: the
+    missing chunks are named as the resume list,
+    held verified chunks are never re-sent or
+    re-executed, and the resume runs only the
+    missing chunk. A chunk corrupted in transit is
+    refused by name (CHUNK_HASH_MISMATCH) and
+    repaired by a lone re-send. SCOPE LIMIT,
+    stated plainly, from this step's close record:
+    ALL OF THIS IS PROVEN ON STAND-IN DEVICE
+    FOLDERS ON ONE MACHINE, driving the real
+    transfer modules and the real bridge steps -
+    it proves the machinery, not that any real
+    device ran anything. NO REAL DEVICE HAS RUN A
+    CHUNK: the Pup, Puppy and Wolf live legs are
+    unproven, the step's own gate of two real
+    devices stands unmet, and STEP #14 STANDS
+    OPEN on those live legs. The offline surface
+    is proven in shape only - a real disconnect
+    mid-transfer, resumed from the offline queue,
+    is unproven. No judge verdict exists for
+    chunked work.
 
-1. THE PER-POINT FILL RADIUS (the editor)
------------------------------------------
-- Selecting a joint point shows a Fill radius row in
-  the Selected panel (slider id fRadius, typed number
-  box fRadiusNum, readout fRadiusVal), mirroring the
-  Angle row. The slider's range is centred on THAT
-  point's radius (20% to 180% of it), so a wrist's
-  slider tops out far below a hip's.
-- The fill circle is drawn as an orange outline over
-  the part (div class fillCircle), centred on the
-  point's pin and sized to its radius. Dragging the
-  point - or typing in the Pin X/Y fields - moves the
-  circle's centre with the point (movePin refreshes
-  it), because the pin is the circle's centre.
-- Each point keeps its own radius. Parts that share
-  one joint (a split carrier sits on its joint's pin
-  beside the joint's own child part) share the joint's
-  radius: they are the same point on screen, and the
-  completion keeps one radius per joint
-  (ME21_applyRadius).
-- A point with no radius set shows the completion's
-  computed default - (base radius + 300) x 1.42 + 4,
-  the redraw engine's own Disc_Radius - marked
-  "(auto)", and stays unset until its slider moves.
-
-2. ANATOMICAL SEEDING (Seed_Disc_Radii_V1.PY)
+THE PLUGIN POINT'S TERMS (step #6, as sealed)
 ---------------------------------------------
-The man's redrawn rig no longer starts from the
-near-uniform 486-534 discs. Each joint's seeded radius
-is measured from the joint's own local part width in
-the artwork: the cross-section width of the parent
-part at the pin, on the line through the pin
-perpendicular to the bone axis, measured on the
-pre-completion split parts (alpha runs bridged across
-gaps up to 160 px; the widest cross-section within
-160 px along the axis, because pins sit at part ends).
-Seed = round(1.42 x width/2) + 4, minimum 12. Nothing
-is hard-coded per joint name - fingers, when they
-come, will simply measure smaller.
-Seeded radii (disc_radius in the rig and GLBs):
-  Front:     waist 261, spine 209, neck 169,
-             shoulder 184/174, elbow 130/138,
-             wrist 92/92, hip 286/286, knee 122/117,
-             ankle 105/103
-  Back:      waist 261, spine 201, neck 161,
-             shoulder 161/161, elbow 145/145,
-             wrist 91/91, hip 219/220, knee 136/136,
-             ankle 98/98
-  SideRight and SideLeft (identical):
-             waist 235, spine 173, neck 77,
-             shoulder 248/204, elbow 151/118,
-             wrist 90/77, hip 191/284, knee 199/148,
-             ankle 95/91
-Wrists (77-92) and ankles (91-105) are the smallest,
-elbows and knees mid, hips, shoulders, neck, waist
-and spine largest - the specified ordering, out of
-the measurements. (The side hip_f 284 reflects the
-known wide side shorts band; the side neck 77 is the
-neck column's true front-to-back width in profile.)
+The editor carries ONE marked plugin point, left
+open for a third-party plugin that connects a
+local language model to the Ai input. The plugin's
+private GitHub repository is referenced by name
+only; nothing of it is exposed or included. The
+point loads a client file when one is configured
+in Settings; the client's shape is
+Describe_It_Client_V1.JS - health, expand, plan,
+judge. Routing with a plugin connected: an emoji
+or description goes to expand, then the editor's
+own picture and model steps run; an instruction
+like "add wings" goes to plan, and the editor
+runs the returned steps with its own tools; a
+finished torrent operation's stitch report and
+rendered views go to judge, completing the final
+pass. The editor itself contains no language model
+and claims none: expanding, planning and judging
+are the plugin's abilities when one is connected,
+never built-in ones. With no plugin connected, the
+Ai input behaves exactly as Version 21 left it,
+and nothing in the page claims otherwise; until a
+plugin is connected, the deterministic stitch
+numbers alone gate a torrent operation. The AI
+tab's per-step models wire at this same point,
+under the same terms.
 
-3. PERSISTENCE - WHERE THE RADII LIVE
--------------------------------------
-- The rig JSON: every joint of
-  Paper_Doll_Redraw_V2/Redrawn_Rig_V1.JSON carries
-  disc_radius (and, after a completion run,
-  fill_source).
-- The GLBs: Build_Redrawn_GLB_V2.PY stamps
-  extras.disc_radius on each joint's child node and
-  on split carriers, and the top-level extras.joints
-  table carries disc_radius per joint. Verified by
-  read-back: 68 of 77 nodes carry it in both the flat
-  and 3D GLBs (the 9 without are face features and
-  roots that carry no joint).
-- The editor: GLB open reads extras.disc_radius
-  (with the joints table as fallback, matched by
-  pin - which also covers the Pelvis root, whose pin
-  is the waist pin); Save GLB writes it back; the
-  Save rig points file carries radius per point;
-  undo snapshots carry it.
+PROOF (the sealed steps' numbers)
+---------------------------------
+Census: 391 of 391 markers in the final built
+file, missing [] (174 Version 21 + 217 step-added),
+counted by the builder and re-read from the file.
+Step proofs, from the plan's COMPLETE markings and
+the seals: #1 the full stock harness, 38 passed,
+0 failed, zero page exceptions. #2 scoped harness
+23 passed, 0 failed. #3 builder census 211/211,
+step proof 9/9, scoped harness 17 passed, 0 failed.
+#4 rig accuracy 31 PASS, scoped harness 17 passed,
+0 failed, census 213/213. #5 both re-run gates
+PASS (sweep worst-after 0 on both models; accuracy
+31 PASS). #6 scoped harness 21 passed, 0 failed,
+both ways (plugin stand-in and no-plugin), honesty
+grep clean - 75 plugin wordings read, none
+presenting plugin abilities as built in. #7 scoped
+harness 21 passed, 0 failed. #8 scoped harness 22
+passed, 0 failed; step proof 9 passed, 0 failed;
+graft proofs GQ-05 19/19, GQ-06 10/10, GQ-07 23/23;
+rig accuracy 31 PASS; the Puppy Blender bake proof
+PASS with its numbers in section 8 above. #9
+scoped harness 17 passed, 0 failed, and the
+stitch-point full pipeline regression all green.
+#10 scoped harness 20 passed, 0 failed. #11 scoped
+harness 40 passed, 0 failed - the driven gate
+landed the budget exactly (Head 320 -> 680, Body
+320, sum 1000, difference 0), watertight, stitch
+PASS. #12 the Piece J harness 32 passed, 0 failed
+of 32, zero page exceptions; the combined subject
+stood at 828 triangles, rigged, with the accuracy
+suite at 31 PASS. #13 piece 2a harness 11/11 and
+piece 2b harness 11/11, each run twice; the driven
+proof 14 passed, 0 failed of 14, run twice with
+byte-identical logs, on the healed build (the
+first driven run against the piece 2b file failed
+its colour-standing gate - the loop refined the
+pre-coloring model because no "color" chain case
+stood - and the heal and the failure both stand
+on this step's record). #14 pieces 2a/2b/2c proven
+on their records; the driven proof 11 passed,
+0 failed of 11, run twice byte-identical; the
+close's stitch-point regression: Bit 14 legs
+14/14, Bit 15 legs 11/11, the five pipeline
+suites five of five TEST PASSED, the cumulative
+suites 70 of 73 with the three failures named as
+legs whose expectations step #13 itself
+superseded - not defects in the chunking work.
+The whole-version proof of step #15 itself -
+the stock harness whole against this file, the
+suites and module round-trips re-run against the
+shipped wiring, the honesty grep and theme pass,
+Review_Check over the whole set - stands in step
+#15's own records (Prep_Bit16_V1.TXT and its
+piece records), not in this specification.
 
-4. THE COMPLETION USES THEM (Editor_Pipeline_V1)
-------------------------------------------------
-The editor's Ai Redraw step sends the tuned radii as
-disc_radii (view -> joint -> radius); the pipeline's
-Step_Redraw writes them to Disc_Radii_Overrides_V1.JSON
-and hands the engine REDRAW_DISC_RADII_JSON. The
-engine's Disc_Radius_For decides per joint: per-run
-override, then the rig's own disc_radius field, then
-the computed default. A point with no set radius
-falls back to the computed radius.
-
-5. THE REVEAL BITMAP - THE DATA PATH WINS
------------------------------------------
-Per joint, the fill source precedence is now:
-  (1) the reveal bitmap, where one exists;
-  (2) the disc at the per-point radius (manual path).
-The bitmap contract: a full-canvas RGBA PNG per view
-and joint at <REDRAW_REVEAL_DIR>/<View>/
-Reveal_<joint name>_V1.PNG - the 3D lane's composite
-of the model's own rendered pixels from 5-degree pose
-sweeps (averaged where steps overlap, by the
-producer). Where a bitmap exists the engine fills
-from the bitmap's own shape AND colours on both sides
-of the joint and draws NO disc for that joint at all;
-bitmap pixels are never outline-repainted (their
-colours are the model's own, edge included). The
-pipeline's Step_Redraw takes Params["reveal_dir"]
-and passes REDRAW_REVEAL_DIR; the editor's Redraw
-step sends the Reveal bitmaps folder from Settings.
-The written rig and census record each joint's
-fill_source ("reveal_bitmap" or "disc").
-
-6. THE STANDING PRODUCT CONTRACT
---------------------------------
-1. Custom tools built in: the Joint Placer paint
-   panel, the per-point radius slider, typed angle
-   entry, the Ai menu, and the machine-path Settings
-   all stay in the product. Nothing moved out.
-2. Full automation first: "Run the whole pipeline"
-   runs Make the 3D model -> Snapshots -> Slice ->
-   Redraw -> Rig it -> Make it paper in the 3D-first
-   order, each step feeding the next from the page
-   session, no hand steps. (Make it 3D stays one
-   click away, as before.)
-3. Every step adjustable after: the step list shows
-   each chain step with its state (not run yet /
-   running / done / failed), its adjustment note, and
-   a "Re-run from here" button that re-runs that step
-   and every step after it - never the steps before.
-   Steps with nothing adjustable (Snapshots, Make it
-   paper) say so plainly in their row.
-4. Modern format: the Ai log grows with its content
-   and wraps (no max-height, no scrollbar cap); the
-   step panel and the save box resize by their
-   corners; the V20 resizable left panel carries
-   forward.
-5. All features requested: the build census carries
-   every V20 feature marker (135, names advanced)
-   plus the V21 markers - 162/162 in the built file.
-
-7. DIRECTION - 3D FIRST, THEN PAPER
------------------------------------
-The Ai flow presents and runs the 3D-first order: the
-Ai hint states it, Make the 3D model offers Snapshots,
-the automated chain runs 3D -> snapshots -> slice ->
-redraw -> rig -> paper, and the paper is derived from
-the 3D (snapshots and sliced layers of the model).
-
-8. THE FOUR-VIEW INPUT SET
---------------------------
-The Ai flow presents four pictures as the standard
-input (the pick is labelled "front, back, left side,
-right side, any order"), and the pipeline's
-detect_views names all four from the unordered set:
-the sides are the stride profiles (widest silhouettes),
-front vs back is decided in the head region, and the
-two sides are told apart by the facing score - the
-feet band's centroid toward the facing direction plus
-the head band's mass skew, both flipping sign under
-mirroring. The sign convention is calibrated on the
-man's set: his source side picture measures +0.0568
-and is the rig's SideRight view; its mirror measures
--0.0568 and names side_left. (The local image-to-3D
-lane is unchanged - it builds from the front; the
-editor's in-page paper doll builder keeps its own
-three-picture pick and derives the second side itself,
-as it always has.) A legacy three-picture set still
-classifies, its single side named by its facing and
-carried under the old "side" key. The 3D tool still
-receives the detected front picture, as before.
-
-PROOF
------
-- Feature census: Build_Model_Editor_V21.PY asserts
-  162/162 markers in Model_Editor_V21.HTML (135 V20
-  features carried, names advanced and the carried
-  picture-count markers in their four-view form,
-  + 27 V21 markers: the radius control, the reveal
-  wiring, the contract machinery, the four-view
-  presentation). The driven harness re-checks the
-  same lists from the files (checks 1a/1b).
-- Editor driven test (Harness_V21.JS, headless
-  Chromium): the seeded GLB opens; selecting the head
-  shows slider 169 with range 34-304 (centred); the
-  wrist reads 92 (slider top 166) against the hip
-  point's 286 (top 515); the slider path sets the
-  head's radius to 110 and the circle measures 220 px
-  across, centred on the pin; moving the point
-  (+40, +25) through the Pin fields moves the circle
-  by exactly (+40, +25); the Ai disc_radii map carries
-  neck 110, wrist_l 92, hip_l 286; Save GLB writes
-  disc_radius 110 into the head node's extras (the
-  untouched hand keeps 92); a fresh page opening the
-  saved GLB shows 110 again.
-- Pipeline driven test (Test_Disc_Radii_V1.PY): the
-  wiring carries the overrides file into the engine's
-  environment; with the neck tuned to 120 the head
-  part's filled disc measures 120 (median reach over
-  72 rays) against the default run's 515; the
-  untouched wrist is identical in both runs (480).
-  11/11 checks pass.
-- Reveal driven test (Test_Reveal_Bitmaps_V1.PY):
-  with the neck's radius tuned to 400 in BOTH runs, a
-  fabricated neck bitmap (a 640x80 magenta bar) makes
-  the reveal run's head reach 320 left (the bar) and
-  128 down (the head's own stub - no disc drawn),
-  against the control run's 400/400 disc; 88,524
-  bitmap-coloured pixels land across the Front parts;
-  rig and census record fill_source per joint; the
-  wrist fallback is pixel-identical. 13/13 pass.
-- Detection driven test (Test_Detect_Views_V1.PY):
-  the four-view set (front, back, side, and the
-  side's mirror as the second side) classifies
-  correctly on all four names, facing scores exactly
-  opposed (+0.0568 / -0.0568); the legacy
-  three-picture set still classifies. 7/7 pass.
-- Contract driven pass (Harness_V21.JS checks 9a-9g):
-  format styles verified live; one click on Run the
-  whole pipeline completes all six steps on the
-  sandbox bridge with the four-view set (the run's
-  detection verdict names side_left and side_right;
-  states all done, paper GLB chained and on disk, the
-  run's neck recorded fill_source reveal_bitmap with
-  the tuned radius); then the redraw radius is tuned
-  110 -> 90 and its Re-run from here pressed: the
-  completion records 90 while Make the 3D model's GLB
-  keeps its exact mtime - the earlier steps did not
-  re-run.
-- Review_Check: 0 FAIL 0 WARN on Surgery_V21.PY,
-  Build_Model_Editor_V21.PY, Pipeline_Steps_V1.PY,
-  Redraw_Circles_V1.PY, Seed_Disc_Radii_V1.PY,
-  Build_Redrawn_GLB_V2.PY, Test_Disc_Radii_V1.PY,
-  Test_Reveal_Bitmaps_V1.PY and Test_Detect_Views_V1.PY.
-
-SHIP (2026-11-16 - the verdict gate lifted)
--------------------------------------------
-Model_Editor_V21.HTML and this spec ship to the
-3D_Model_Editor repository and to Google Drive,
-read-back verified by MD5; the V19 editor file is
-removed from both, per the version law (the older
-spec files stand as the paper trail, as they do for
-every earlier version). Open items stand as recorded
-for V20: the combined-pose ladder residue (resampling
-dust), the pipeline's real image-to-3D run and live
-local model start are proven only as local settings,
-and the reveal bitmaps themselves are the local 3D
-lane's product - the consumer side here is proven
-against a fabricated bitmap in the exact contract
-layout.
-
-BIT 2 - TORRENT SECTIONS (elements 4 and 11; issue 46)
-------------------------------------------------------
-Added 2026-11-17, Bit 2 of the Version 22 Assembly
-Plan. The Sections panel stands in the panel after
-the Detail section, in the page's own section shape:
-a Sections count (sectionCount), an operation picker
-(torrentOperation: wave, scale, rotate, translate -
-the torrent module's own operations), a Run button
-(runSections) and the stitch line (stitchStatus),
-inside sectionsSection.
-
-Heavy operations route through the torrent sections
-route: the pipeline's torrent step (Step_Torrent)
-runs Torrent_Sections_V1.PY on the open model's GLB -
-the operation runs section by section, then the
-stitch pass runs over the whole model. The panel's
-stitch line shows the verdict from the step report:
-seam mismatches counted, the watertight verdict, and
-the triangle count against the slider target, with
-the whole-model compare (the sectioned run equals
-the whole run; the step runs with --verify-whole).
-An operation is not reported done until the stitch
-pass says so: the editor reloads a result only when
-the step report's stitch pass passed, and on a
-stitch failure the line names the seam mismatches
-and the open model is unchanged. The detail step
-routes through this same route: after the detail
-module rewrites the geometry, its result runs
-through the torrent program (the identity operation,
-scale factor 1.0, section by section with the stitch
-pass and the whole-model compare) and the torrent
-output is what the editor reloads; a stitch failure
-fails the detail step. Sculpt arrives in Bit 3 and
-routes through this route when the model is large,
-as the plan states. The rig and paper steps'
-products are layered multi-node GLBs, outside the
-torrent module's single-solid-mesh scope, and are
-not flattened through it.
-
-The plugin judging half of the final pass - a plugin
-judging the stitch report plus rendered views -
-wires in Bit 7. Until then the deterministic stitch
-numbers alone gate the operation. That is stated
-plainly here, as the plan requires: no plugin
-judgement is claimed for a Bit 2 operation.
-
-Scope, declared in the panel too: the torrent step
-carries geometry and COLOR_0 only; it does not carry
-skinning, animation or textures. A model with a
-skins array or JOINTS_0 / WEIGHTS_0 attributes is
-refused with a plain log line and the reason on the
-stitch line - never silently stripped.
+SHIP STATE
+----------
+The ship set is three files, in Version 21's
+shape: Model_Editor_V22.HTML (this build, under
+its ship name), this specification, and LICENSE.
+The Personal Use Registry check was run on this
+set at step #15, piece 2b, in the Version 21
+precedent's form, before the set is called ready:
+the registry's two flagged assets (the Generalized
+Human Body GLB, MD5 4505514390e79ece467bd67389ccc
+d0c, and Mushu the Dragon GLB, MD5 111425e0d4d9a0
+bc83f8ee6a44b41b33) were checked against the set -
+the editor file's embedded data decoded and every
+decoded payload measured, and the flagged bytes
+themselves searched for in every ship file.
+RESULT: PASS - no flagged asset is or is
+contained in the ship set; the numbers stand in
+Lane_Record_Bit16_Piece2b_V1.TXT. The built file
+is handed to Solomon in chat at step #15's close,
+to run, test, and edit, the way Version 21 was.
+THE SHIP ITSELF WAITS FOR SOLOMON'S WORD (his rule
+of 2026-11-17): the GitHub push of the Version 22
+number, the Drive placement, the removal of
+Version 21 from both homes, and the issue closures
+at this gate happen only at the ship, on his word.
+Step #14 stands open on its live legs (above), so
+under step #15's recorded proposal the version is
+handed over as a proof and a handover, not marked
+a finished version close, until step #14 closes or
+Solomon rules otherwise.
