@@ -1,34 +1,37 @@
 Model Editor V22 - what Version 22 does
 ======================================================
 
-This specification is rewritten whole at Finish Plan
-V3 step #15 (Bit 16, piece 2b), from the root spec it
-replaces. The root spec was written 2026-11-17 for
-the Assembly: it carried the Version 21 specification
-verbatim and recorded Bit 2 only, so it could not
-state what Version 22 does. This rewrite states it.
-Every claim below traces to a sealed step record -
-the Finish Plan V3 COMPLETE markings for steps #1
-to #13, the Bit 14 seal (step #13), and the Bit 15
-close record (step #14) - and the limits those
-records carry are stated here in plain words, not
-dropped. Where a proof ran with no plugin connected,
-this spec says so; nothing aspirational is stated
-as built.
+This specification is the Finish Plan V3 step #15
+specification, first rewritten whole at Bit 16 piece
+2b (2026-11-20) and carried forward at step #15's
+whole-version proof of 2026-11-23 with its statements
+moved to the final build and to step #14's live
+close. Every claim below traces to a sealed step
+record - the Finish Plan V3 COMPLETE markings for
+steps #1 to #15 - and the limits those records carry
+are stated here in plain words, not dropped. Where
+a proof ran with no plugin connected, this spec
+says so; nothing aspirational is stated as built.
 
 THE FILE
 --------
 Model_Editor_V22.HTML is one self-contained HTML
-file: 9,199,023 bytes, MD5
-0b07e0a42d8205e7ea60e1bfb6ad35de. It is Version 21's
+file: 9,204,175 bytes, MD5
+dd702a443453a3a41ebd4bb5cf5c05a9. It is Version 21's
 editor carried whole - every Version 21 feature
-stands in it - plus the fourteen steps of the
+stands in it - plus the fifteen steps of the
 Version 22 Finish Plan, grafted cumulatively bit by
-bit, each proven before the next started. The build
-census over the final built file counts 391 of 391
-markers present, missing []: the 174 Version 21
-markers (names advanced) and 217 markers the steps
-added. The editor is open source under the MIT
+bit, each proven before the next started, and the
+both-forms work Solomon ruled on 2026-11-22 (Bits
+17, 18 and 20, below). The step #15 census over the
+final built file counts the accumulated 391-marker
+census at 390 present plus one marker proven
+replaced (the binary-only combined export call,
+rewritten whole by Bit 17 to take the form; its
+replacement line stands in the file), missing []:
+the 174 Version 21 markers (names advanced, none
+lost) and 217 markers the steps added, plus the
+six markers the both-forms bits added, all present. The editor is open source under the MIT
 License (LICENSE, carried unchanged from Version
 21's shipped copy). The standing product contract
 carries from Version 21 unaltered: custom tools
@@ -307,21 +310,51 @@ THE VERSION 22 STEPS
     re-executed, and the resume runs only the
     missing chunk. A chunk corrupted in transit is
     refused by name (CHUNK_HASH_MISMATCH) and
-    repaired by a lone re-send. SCOPE LIMIT,
-    stated plainly, from this step's close record:
-    ALL OF THIS IS PROVEN ON STAND-IN DEVICE
-    FOLDERS ON ONE MACHINE, driving the real
-    transfer modules and the real bridge steps -
-    it proves the machinery, not that any real
-    device ran anything. NO REAL DEVICE HAS RUN A
-    CHUNK: the Pup, Puppy and Wolf live legs are
-    unproven, the step's own gate of two real
-    devices stands unmet, and STEP #14 STANDS
-    OPEN on those live legs. The offline surface
-    is proven in shape only - a real disconnect
-    mid-transfer, resumed from the offline queue,
-    is unproven. No judge verdict exists for
+    repaired by a lone re-send. LIVE CLOSE (2026-11-23, superseding this
+    step's first close): the two-real-device gate
+    is now met on real devices. Pup ran the Head
+    chunk live (680 of 680 triangles, exact,
+    watertight, stitch PASS, seam 0) and Puppy ran
+    the Body chunk live (320 triangles); the live
+    stitched GLB (27,764 bytes, 1,000 triangles)
+    is byte-equal to the single-device output,
+    maximum position difference 0.0, both
+    watertight, 0 resent chunks, and the stitched
+    result standing in the editor is proven by a
+    scoped harness run twice, zero page
+    exceptions. Dropout, offline, Wolf refused by
+    name, and corruption-refusal forms are all
+    proven. Wolf itself has not run a chunk: it
+    was refused by name in the live forms, as the
+    assignment rule requires for a device the run
+    does not hold. No judge verdict exists for
     chunked work.
+
+15. BOTH MODEL FORMS (Solomon's ruling of
+    2026-11-22, Bits 17, 18 and 20, after the plan's
+    fifteen steps). The editor handles both glTF
+    and GLB and defaults to glTF. The alongside
+    model picker accepts .glb and .gltf; a model
+    opens by content sniffing (GLB magic or glTF
+    JSON text, embedded data-URI buffers decoded,
+    a buffer or image named as a separate file
+    refused with a plain status naming that file);
+    the rig-point save writes back in the form the
+    model was loaded in, and its button is named
+    "Save Loaded Form"; the combined save writes
+    Combined_Models_V1.gltf by default and
+    Combined_Models_V1.glb on its GLB button; and
+    the paper doll Finish export writes
+    Paper_Model_V1.gltf (the same scene and binary
+    bytes the GLB export carried, as JSON text with
+    its one buffer embedded as a data URI), in the
+    download and in the Finish set zip alike.
+    Proven live both ways in the bits' own records:
+    the open-save-compare proof re-run against the
+    Bit 20 page stands byte-identical to the Bit 17
+    and Bit 18 runs, and the Finish proof's glTF
+    scene equals the GLB control's scene exactly,
+    byte for byte in every accessor.
 
 THE PLUGIN POINT'S TERMS (step #6, as sealed)
 ---------------------------------------------
@@ -353,9 +386,13 @@ under the same terms.
 
 PROOF (the sealed steps' numbers)
 ---------------------------------
-Census: 391 of 391 markers in the final built
-file, missing [] (174 Version 21 + 217 step-added),
-counted by the builder and re-read from the file.
+Census (step #15, 2026-11-23): the accumulated
+391-marker census stands at 390 present plus one
+proven replaced, missing [] (174 Version 21, none
+lost, + 217 step-added), plus the six both-forms
+markers, all present - counted by
+Census_Step15_V1.PY from the source builders and
+lane records, never asserted from memory.
 Step proofs, from the plan's COMPLETE markings and
 the seals: #1 the full stock harness, 38 passed,
 0 failed, zero page exceptions. #2 scoped harness
@@ -399,13 +436,19 @@ suites five of five TEST PASSED, the cumulative
 suites 70 of 73 with the three failures named as
 legs whose expectations step #13 itself
 superseded - not defects in the chunking work.
-The whole-version proof of step #15 itself -
-the stock harness whole against this file, the
-suites and module round-trips re-run against the
-shipped wiring, the honesty grep and theme pass,
-Review_Check over the whole set - stands in step
-#15's own records (Prep_Bit16_V1.TXT and its
-piece records), not in this specification.
+#14's live close stands in
+Lane_Record_Bit15_LiveClose_V1.TXT
+(V22_Bit15_LivePrep_V1): the live legs above, the
+scoped editor harness 3 passed, 0 failed of 3, run
+twice, zero page exceptions, and Review_Check 0
+FAIL 0 WARN. The whole-version proof of step #15
+itself - the stock harness whole against this
+file, the suites and module round-trips re-run
+against the shipped wiring, the honesty grep and
+theme pass, Review_Check over the whole set -
+stands in step #15's own record
+(Lane_Record_Step15_V1.TXT in V22_Step15_V1), not
+in this specification.
 
 SHIP STATE
 ----------
@@ -413,7 +456,7 @@ The ship set is three files, in Version 21's
 shape: Model_Editor_V22.HTML (this build, under
 its ship name), this specification, and LICENSE.
 The Personal Use Registry check was run on this
-set at step #15, piece 2b, in the Version 21
+set at step #15 (2026-11-23), in the Version 21
 precedent's form, before the set is called ready:
 the registry's two flagged assets (the Generalized
 Human Body GLB, MD5 4505514390e79ece467bd67389ccc
@@ -424,16 +467,15 @@ decoded payload measured, and the flagged bytes
 themselves searched for in every ship file.
 RESULT: PASS - no flagged asset is or is
 contained in the ship set; the numbers stand in
-Lane_Record_Bit16_Piece2b_V1.TXT. The built file
-is handed to Solomon in chat at step #15's close,
-to run, test, and edit, the way Version 21 was.
+step #15's lane record. The built file is handed
+to Solomon in chat at step #15's close, to run,
+test, and edit, the way Version 21 was.
 THE SHIP ITSELF WAITS FOR SOLOMON'S WORD (his rule
 of 2026-11-17): the GitHub push of the Version 22
 number, the Drive placement, the removal of
 Version 21 from both homes, and the issue closures
 at this gate happen only at the ship, on his word.
-Step #14 stands open on its live legs (above), so
-under step #15's recorded proposal the version is
-handed over as a proof and a handover, not marked
-a finished version close, until step #14 closes or
-Solomon rules otherwise.
+All fifteen steps of Finish Plan V3 stand
+COMPLETE, step #14 on its live close of
+2026-11-23, so this handover is the version
+close the plan names, on Solomon's ship word.
