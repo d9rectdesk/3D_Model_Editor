@@ -280,14 +280,15 @@
   <div class="row"><button id="modelsCheckBtn">Check the files again</button></div>
   </div>
   <h2>Alongside</h2>
-  <p class="hint">Loading a GLB here never replaces what is open: an added model stands alongside the open model in the 3D view, placed the way rig points are placed - drag it in the view, or set its position here and move it - and its own X and Y directions can be changed for that object alone. Save the combined models writes one new GLB holding the open model and every alongside model as placed; an alongside add, move or remap never writes the open model itself.</p>
+  <p class="hint">Loading a GLB here never replaces what is open: an added model stands alongside the open model in the 3D view, placed the way rig points are placed - drag it in the view, or set its position here and move it - and its own X and Y directions can be changed for that object alone. Save the combined models writes one new file holding the open model and every alongside model as placed - a glTF file from the first button, or a GLB from the GLB button; an alongside add, move or remap never writes the open model itself.</p>
   <div id="alongsideSection">
   <div id="alongsideList"></div>
-  <div class="row"><button id="alongsideAddBtn">Add a model alongside</button><input type="file" id="alongsideFile" accept=".glb" style="display:none"></div>
+  <!-- Both forms (2026-11-22): the alongside picker takes .glb and .gltf - applications handle both forms and default to glTF. Source: Solomon's ruling, 2026-11-22. -->
+  <div class="row"><button id="alongsideAddBtn">Add a model alongside</button><input type="file" id="alongsideFile" accept=".glb,.gltf" style="display:none"></div>
   <div class="row"><label>Model</label><select id="alongsideObj" style="flex:1"></select></div>
   <div class="row"><label>X</label><input type="number" id="alongsideX" step="0.1" value="0"><label>Y</label><input type="number" id="alongsideY" step="0.1" value="0"><label>Z</label><input type="number" id="alongsideZ" step="0.1" value="0"><button id="alongsideMoveBtn">Move the selected model</button></div>
   <div class="row"><label>New X from</label><select id="alongsideXFrom"><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option></select><label>New Y from</label><select id="alongsideYFrom"><option value="X">X</option><option value="Y" selected>Y</option><option value="Z">Z</option></select><button id="alongsideRemapBtn">Remap the axes</button></div>
-  <div class="row"><button id="alongsideSaveBtn">Save the combined models</button></div>
+  <div class="row"><button id="alongsideSaveBtn">Save the combined models (glTF)</button><button id="alongsideSaveGlbBtn">Save the combined models as GLB</button></div>
   <div class="small" id="alongsideStatus">no model alongside yet</div>
   </div>
   <h2>Detail</h2>
@@ -348,7 +349,7 @@
   <div class="row"><label>Page distance</label><input type="range" id="pageDist" min="0" max="0.12" step="0.002" value="0.03"><span class="deg" id="pageDistVal">0.030</span></div>
   <div id="stackPrev"></div>
   <div id="pageList"></div>
-  <p class="hint">Every page floats the same distance from the next, so turning the model shows which page is in front. Move pages up or down to change the stack. The paper GLB and the Finish set use this order and distance.</p>
+  <p class="hint">Every page floats the same distance from the next, so turning the model shows which page is in front. Move pages up or down to change the stack. The paper glTF and the Finish set use this order and distance.</p>
   </div>
   <div id="layersSection" style="display:none">
   <h2>Loaded layers</h2>
@@ -1208,7 +1209,7 @@ $("pageDist").addEventListener("change", () => commit());
    stack (the end of stackOrder, back-to-front), pinned at the middle
    of its own picture, a root until it is connected. It joins the
    parts list, the pages list, click-to-select, the stack preview,
-   and the Finish GLB/zip (no back picture, so the GLB gives it a
+   and the Finish glTF/zip (no back picture, so the glTF gives it a
    double-sided page). Image mode: the image stacks over the solo
    image as an extra page; the rig points stay with the base image,
    and Save/Finish carry every loaded layer as its own page. */
@@ -1279,7 +1280,7 @@ async function addLayerPart(fileName, src) {
   computeMasks({ [id]: src });
   buildList(); renderPages(); refreshStack(); makeRestCanvas();
   select(it); commit();
-  $("howText").textContent = "This model is separated paper parts — and you just loaded a new layer onto the front of the stack. It is its own page: drag its pin in Edit Points, connect it to a parent if it should move with another part, move it in the pages list to change where it sits in the stack, or remove it with the ✕ on its page row. Finish and the paper GLB include it as a double-sided page.";
+  $("howText").textContent = "This model is separated paper parts — and you just loaded a new layer onto the front of the stack. It is its own page: drag its pin in Edit Points, connect it to a parent if it should move with another part, move it in the pages list to change where it sits in the stack, or remove it with the ✕ on its page row. Finish and the paper glTF include it as a double-sided page.";
   status(`Layer added at the front of the stack: ${it.label}. Its pin sits at the center of its own picture — move it in Edit Points if it belongs somewhere else.`);
 }
 function removeLayerPart(id) {
@@ -1414,8 +1415,8 @@ window.addEventListener("keyup", ev => {
   if (nudging && ev.key.startsWith("Arrow")) { nudging = false; commit(); }
 });
 
-/* ---------------- paper GLB export and the Finish set ---------------- */
-async function buildPaperGLB() {
+/* ---------------- paper glTF export and the Finish set ---------------- */
+async function buildPaperGLTF() {
   const views = [], accessors = [], meshes = [], materials = [], images = [], nodes = [], chunks = [];
   let offset = 0;
   const addView = (bytes, target) => {
@@ -1461,15 +1462,23 @@ async function buildPaperGLB() {
     scenes: [{ nodes: nodes.map((_, k) => k) }], nodes, meshes, materials, images,
     textures: images.map((_, k) => ({ source: k })), accessors, bufferViews: views,
     buffers: [{ byteLength: binLen }] };
-  let jsonStr = JSON.stringify(gltf);
-  while (jsonStr.length % 4) jsonStr += " ";
-  const jsonBytes = new TextEncoder().encode(jsonStr);
-  const total = 12 + 8 + jsonBytes.byteLength + 8 + binLen;
-  const head = new DataView(new ArrayBuffer(12));
-  head.setUint32(0, 0x46546c67, true); head.setUint32(4, 2, true); head.setUint32(8, total, true);
-  const jh = new DataView(new ArrayBuffer(8)); jh.setUint32(0, jsonBytes.byteLength, true); jh.setUint32(4, 0x4e4f534a, true);
-  const bh = new DataView(new ArrayBuffer(8)); bh.setUint32(0, binLen, true); bh.setUint32(4, 0x004e4942, true);
-  return new Blob([head.buffer, jh.buffer, jsonBytes, bh.buffer, ...chunks], { type: "model/gltf-binary" });
+  // glTF form (2026-11-22): the same scene object
+  // and the same binary bytes the GLB container
+  // carried, written as JSON text with the one
+  // buffer embedded as a data URI - the self-
+  // contained .gltf form the rest of the editor
+  // writes (Bit 17's combined save writes its
+  // glTF the same way, buffers embedded). Source:
+  // Solomon's ruling of 2026-11-22 (the Finish
+  // export switches to glTF like the rest);
+  // Kevin, original work.
+  const bin = new Uint8Array(binLen);
+  let boff = 0;
+  for (const c of chunks) { bin.set(c, boff); boff += c.byteLength; }
+  let bstr = "";
+  for (let i = 0; i < bin.length; i += 0x8000) bstr += String.fromCharCode.apply(null, bin.subarray(i, i + 0x8000));
+  gltf.buffers[0].uri = "data:application/octet-stream;base64," + btoa(bstr);
+  return new Blob([JSON.stringify(gltf)], { type: "model/gltf+json" });
 }
 function download(blob, name) {
   const a = document.createElement("a");
@@ -1514,19 +1523,19 @@ $("finishBtn").addEventListener("click", async () => {
     status("Layer set downloaded: the base image, every loaded layer as its own page, and the rig data. The points belong to the base page.");
     return;
   }
-  if (MODE !== "parts") { status("This model is one image — the rig data is the deliverable. The separated files and GLB come after the points are saved."); return; }
-  status("Building the full set: GLB and zip…");
-  const glb = await buildPaperGLB();
-  download(glb, "Paper_Model_V1.glb");
+  if (MODE !== "parts") { status("This model is one image — the rig data is the deliverable. The separated files and glTF come after the points are saved."); return; }
+  status("Building the full set: glTF and zip…");
+  const gltf = await buildPaperGLTF();
+  download(gltf, "Paper_Model_V1.gltf");
   const entries = [];
   for (const id of stackOrder) {
     entries.push([id + ".PNG", await (await fetch(CUR_IMAGES[id])).blob()]);
     if (CUR_BACKS[id]) entries.push([id.replace("_V1", "_Back_V1") + ".PNG", await (await fetch(CUR_BACKS[id])).blob()]);
   }
   entries.push(["Rig_Points_Saved_V1.JSON", new Blob([$("saveBox").value], { type: "application/json" })]);
-  entries.push(["Paper_Model_V1.glb", glb]);
+  entries.push(["Paper_Model_V1.gltf", gltf]);
   download(await buildZip(entries), "Paper_Model_Set_V1.zip");
-  status("Full set downloaded: rig data, the paper GLB at your page distance and order, and the zip with every file.");
+  status("Full set downloaded: rig data, the paper glTF at your page distance and order, and the zip with every file.");
 });
 
 /* ---------------- panel ---------------- */
@@ -1866,15 +1875,50 @@ async function ME22_openGLB(file) {
   const seq = ++ME22_openSeq;
   const buf = await file.arrayBuffer();
   if (seq !== ME22_openSeq) return;
+  // Both forms (2026-11-22): a GLB carries its JSON
+  // in the first chunk; a glTF file is that same
+  // JSON standing alone. Either way the parse lands
+  // in the one gltf object the rest of this function
+  // builds the scene from. In the glTF form the
+  // binary data rides inside the JSON as data URIs;
+  // a buffer or image the file names as a separate
+  // file was not supplied with it, and the open says
+  // so plainly, naming it, instead of failing
+  // silently. Source: Solomon's ruling, 2026-11-22
+  // (applications handle both forms, default glTF);
+  // Kevin, original work.
   const dv = new DataView(buf);
-  if (dv.getUint32(0, true) !== 0x46546C67) { status("That file is not a GLB."); return; }
-  const jlen = dv.getUint32(12, true);
-  const gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jlen)));
-  const binStart = 20 + jlen + 8;
+  let gltf = null, binSource = null, binBase = 0;
+  if (dv.getUint32(0, true) === 0x46546C67) {
+    const jlen = dv.getUint32(12, true);
+    gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jlen)));
+    binSource = buf; binBase = 20 + jlen + 8;
+  } else {
+    try { gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf))); }
+    catch (e) { status("That file is not a GLB or a glTF."); return; }
+    const b0 = (gltf.buffers || [])[0];
+    if (b0 && b0.uri && b0.uri.startsWith("data:")) {
+      try { binSource = await (await fetch(b0.uri)).arrayBuffer(); }
+      catch (e) { status("The buffer embedded in this glTF could not be read: " + e.message); return; }
+      if (seq !== ME22_openSeq) return;
+    } else if (b0 && b0.uri) {
+      status("This glTF names a separate buffer file, " + b0.uri + ", that was not supplied with it - the model cannot be opened without that file.");
+      return;
+    }
+  }
   const imgURL = {};
   for (const im of gltf.images || []) {
+    if (im.uri) {
+      if (im.uri.startsWith("data:")) { imgURL[im.name] = im.uri; continue; }
+      status("This glTF names a separate image file, " + im.uri + ", that was not supplied with it - the model cannot be opened without that file.");
+      return;
+    }
     const bv = gltf.bufferViews[im.bufferView];
-    const bytes = new Uint8Array(buf, binStart + (bv.byteOffset || 0), bv.byteLength);
+    if (!binSource || !bv) {
+      status("This glTF's pictures ride in a buffer file that was not supplied with it - the model cannot be opened without that file.");
+      return;
+    }
+    const bytes = new Uint8Array(binSource, binBase + (bv.byteOffset || 0), bv.byteLength);
     imgURL[im.name] = await ME22_dataURL(bytes, im.mimeType);
     if (seq !== ME22_openSeq) return;
   }
@@ -2056,7 +2100,11 @@ setInterval(() => {
 $("loadBtn").addEventListener("click", () => $("filePick").click());
 $("filePick").addEventListener("change", async ev => {
   const files = [...ev.target.files]; if (!files.length) return;
-  const glb = files.find(f => /\.glb$/i.test(f.name));
+  // Both forms (2026-11-22): a picked glTF file opens
+  // by the same road as a GLB - ME22_openGLB reads the
+  // JSON either way. Source: Solomon's ruling,
+  // 2026-11-22.
+  const glb = files.find(f => /\.(glb|gltf)$/i.test(f.name));
   if (glb) { if (window.ME22_addModel) ME22_addModel({ name: glb.name, kind: "opened", file: glb }); ME22_openGLB(glb); return; }
   const pngs = files.filter(f => /^Part_.*\.PNG$/i.test(f.name));
   const rigFile = files.find(f => /Rig_Points.*\.JSON$/i.test(f.name));
@@ -2112,7 +2160,13 @@ $("filePick").addEventListener("change", async ev => {
 const addBtn = document.createElement("button"); addBtn.textContent = "Add Point";
 const delBtn = document.createElement("button"); delBtn.textContent = "Delete Point"; delBtn.className = "danger";
 $("editBtn").parentElement.append(addBtn, delBtn);
-const saveGlbBtn = document.createElement("button"); saveGlbBtn.id = "saveGlbBtn"; saveGlbBtn.textContent = "Save GLB";
+// Loaded-form wording (2026-11-22): the rig-point
+// save writes back in the form the model was
+// loaded in (Bit 17), so the button names that -
+// Save Loaded Form - not GLB alone. Source:
+// Solomon's both-forms ruling, 2026-11-22;
+// Kevin, original work.
+const saveGlbBtn = document.createElement("button"); saveGlbBtn.id = "saveGlbBtn"; saveGlbBtn.textContent = "Save Loaded Form";
 $("saveBtn").parentElement.append(saveGlbBtn);
 let addArmed = false;
 let ME22_GLB = null;          // { name } while a GLB file backs the screen
@@ -2249,17 +2303,31 @@ function ME22_syncView() {
   for (const id of order) if (CUR_IMAGES[id] && !V.stack.includes(id)) V.stack.push(id);
 }
 async function ME22_saveGLB() {
-  if (!ME22_GLB || !ME22_URL) { status("Save GLB writes into a loaded GLB - open one first."); return; }
+  if (!ME22_GLB || !ME22_URL) { status("Save writes into a loaded GLB or glTF - open one first."); return; }
   ME22_syncView();
   if (window.ME22_sync3D) window.ME22_sync3D();
   let buf;
   try { buf = await (await fetch(ME22_URL)).arrayBuffer(); }
-  catch (e) { status("The loaded GLB could not be read back: " + e.message); return; }
+  catch (e) { status("The loaded model could not be read back: " + e.message); return; }
+  // Both forms (2026-11-22): the loaded file may stand
+  // in either form - a GLB carries its JSON in the
+  // first chunk and its binary tail is carried through
+  // untouched; a glTF file is the JSON alone, its
+  // buffers riding inside it, and it is written back
+  // as JSON. The rig-point rewrite between here and
+  // the write is the one shared body. Source:
+  // Solomon's ruling, 2026-11-22; Kevin, original work.
   const dv = new DataView(buf);
-  if (dv.getUint32(0, true) !== 0x46546C67) { status("The loaded model is not a GLB."); return; }
-  const jlen = dv.getUint32(12, true);
-  const gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jlen)));
-  const tail = new Uint8Array(buf, 20 + jlen);
+  const isGlb = dv.getUint32(0, true) === 0x46546C67;
+  let gltf = null, tail = null;
+  if (isGlb) {
+    const jlen = dv.getUint32(12, true);
+    gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, jlen)));
+    tail = new Uint8Array(buf, 20 + jlen);
+  } else {
+    try { gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf))); }
+    catch (e) { status("The loaded model is not a GLB or a glTF."); return; }
+  }
   const byKey = new Map();
   (gltf.nodes || []).forEach((n, i) => { const ex = n.extras; if (ex && ex.view && ex.part) byKey.set(ex.view + "|" + ex.part, i); });
   const keep = new Set(), drop = new Set(), born = [];
@@ -2297,19 +2365,25 @@ async function ME22_saveGLB() {
   for (const n of nodes2) if (n.children) n.children = n.children.filter(c => remap.has(c)).map(c => remap.get(c));
   for (const s of gltf.scenes || []) s.nodes = (s.nodes || []).filter(i => remap.has(i)).map(i => remap.get(i)).concat(bornIdx);
   gltf.nodes = nodes2;
-  const jsonBytes = new TextEncoder().encode(JSON.stringify(gltf));
-  const pad = (4 - (jsonBytes.length % 4)) % 4;
-  const total = 12 + 8 + jsonBytes.length + pad + tail.length;
-  const out = new ArrayBuffer(total);
-  const ou8 = new Uint8Array(out), odv = new DataView(out);
-  odv.setUint32(0, 0x46546C67, true); odv.setUint32(4, dv.getUint32(4, true), true); odv.setUint32(8, total, true);
-  odv.setUint32(12, jsonBytes.length + pad, true); odv.setUint32(16, 0x4E4F534A, true);
-  ou8.set(jsonBytes, 20);
-  for (let i = 0; i < pad; i++) ou8[20 + jsonBytes.length + i] = 0x20;
-  ou8.set(tail, 20 + jsonBytes.length + pad);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([out], { type: "model/gltf-binary" }));
-  a.download = ME22_NAME || "Model_Edited_V1.GLB"; a.click(); URL.revokeObjectURL(a.href);
+  if (isGlb) {
+    const jsonBytes = new TextEncoder().encode(JSON.stringify(gltf));
+    const pad = (4 - (jsonBytes.length % 4)) % 4;
+    const total = 12 + 8 + jsonBytes.length + pad + tail.length;
+    const out = new ArrayBuffer(total);
+    const ou8 = new Uint8Array(out), odv = new DataView(out);
+    odv.setUint32(0, 0x46546C67, true); odv.setUint32(4, dv.getUint32(4, true), true); odv.setUint32(8, total, true);
+    odv.setUint32(12, jsonBytes.length + pad, true); odv.setUint32(16, 0x4E4F534A, true);
+    ou8.set(jsonBytes, 20);
+    for (let i = 0; i < pad; i++) ou8[20 + jsonBytes.length + i] = 0x20;
+    ou8.set(tail, 20 + jsonBytes.length + pad);
+    a.href = URL.createObjectURL(new Blob([out], { type: "model/gltf-binary" }));
+    a.download = ME22_NAME || "Model_Edited_V1.GLB";
+  } else {
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(gltf)], { type: "model/gltf+json" }));
+    a.download = ME22_NAME || "Model_Edited_V1.gltf";
+  }
+  a.click(); URL.revokeObjectURL(a.href);
   const summary = {};
   for (const vname of Object.keys(ME22_VIEWS)) {
     const V = ME22_VIEWS[vname];
@@ -2317,7 +2391,7 @@ async function ME22_saveGLB() {
       parent: V.parents[part] || null, label: V.labels[part], desc: V.descs[part] || "", radius: (V.radii && V.radii[part] != null) ? Math.round(V.radii[part]) : null }));
   }
   $("saveBox").value = JSON.stringify({ savedInto: ME22_NAME, views: summary }, null, 1);
-  status(`GLB saved: ${written} rig points written into ${ME22_NAME} (${born.length} added, ${drop.size} node(s) removed${skipped ? `, ${skipped} loaded layer(s) not embedded` : ""}).`);
+  status(`${isGlb ? "GLB" : "glTF"} saved: ${written} rig points written into ${ME22_NAME} (${born.length} added, ${drop.size} node(s) removed${skipped ? `, ${skipped} loaded layer(s) not embedded` : ""}).`);
 }
 addBtn.addEventListener("click", () => {
   if (MODE === "3d") { status("Add points on a 2D view of the GLB - pick a view in the model list, then Add Point."); return; }
@@ -3045,7 +3119,16 @@ function ME22_firstModelState() {
 // clones, so the live stage is never mutated by the
 // save. The open model's own file is never the
 // download's target: the combined file is new.
-async function ME22_saveCombined() {
+// Both forms (2026-11-22): the save takes a form -
+// "gltf" writes the JSON form with embedded buffers
+// (the default in the Alongside save surface),
+// "glb" writes the binary form. A call with no form
+// keeps the standing binary behaviour, so the
+// placement runner's record (ME22_lastCombined and
+// ME22_lastCombinedBuffer) is unchanged. Source:
+// Solomon's ruling, 2026-11-22 (applications handle
+// both forms, default glTF); Kevin, original work.
+async function ME22_saveCombined(format) {
   // Piece G (2026-11-19): the whole export stands
   // under the same rendering hold as placement
   // (counted, so a call inside ME22_runPlacement
@@ -3062,22 +3145,34 @@ async function ME22_saveCombined() {
   const names = [];
   if (currentModel) { const c = currentModel.clone(true); c.name = currentModel.name || "OpenModel"; root.add(c); names.push(ME22_NAME || c.name); }
   for (const e of ME22_alongside) { const c = e.group.clone(true); root.add(c); names.push(e.name); }
+  const wantGlb = format !== "gltf";
   let out = null;
   try {
-    out = await ME22_withTimeout(new GLTFExporter().parseAsync(root, { binary: true }), ME22_ALONGSIDE_SAVE_TIMEOUT_MS);
+    out = await ME22_withTimeout(new GLTFExporter().parseAsync(root, { binary: wantGlb }), ME22_ALONGSIDE_SAVE_TIMEOUT_MS);
   } catch (err) {
     ME22_alongsideStatus("The combined save failed: " + (err && err.message ? err.message : err));
     return null;
   }
-  const buf = out instanceof ArrayBuffer ? out : null;
-  window.ME22_lastCombined = { names, count: names.length, bytes: buf ? buf.byteLength : 0 };
+  // The exporter's two results: an ArrayBuffer for
+  // the binary form, the JSON object for the glTF
+  // form - the glTF form is written as its JSON text,
+  // buffers embedded by the exporter itself. Source:
+  // three.js GLTFExporter (three@0.160.0), as the
+  // parseAsync call above.
+  let buf = null, fileName = null, mime = null;
+  if (wantGlb && out instanceof ArrayBuffer) { buf = out; fileName = "Combined_Models_V1.glb"; mime = "model/gltf-binary"; }
+  if (!wantGlb && out && typeof out === "object") {
+    buf = new TextEncoder().encode(JSON.stringify(out));
+    fileName = "Combined_Models_V1.gltf"; mime = "model/gltf+json";
+  }
+  window.ME22_lastCombined = { names, count: names.length, bytes: buf ? buf.byteLength : 0, format: wantGlb ? "glb" : "gltf" };
   window.ME22_lastCombinedBuffer = buf;
   if (buf) {
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([buf], { type: "model/gltf-binary" }));
-    a.download = "Combined_Models_V1.GLB"; a.click(); URL.revokeObjectURL(a.href);
-    ME22_alongsideStatus("Combined save written: " + names.length + " model(s) - " + names.join(" + ") + " (" + buf.byteLength + " bytes). The open model itself was not written.");
-  } else ME22_alongsideStatus("The combined save did not produce a GLB.");
+    a.href = URL.createObjectURL(new Blob([buf], { type: mime }));
+    a.download = fileName; a.click(); URL.revokeObjectURL(a.href);
+    ME22_alongsideStatus("Combined save written: " + names.length + " model(s) - " + names.join(" + ") + " (" + buf.byteLength + " bytes, " + (wantGlb ? "GLB" : "glTF") + "). The open model itself was not written.");
+  } else ME22_alongsideStatus("The combined save did not produce a " + (wantGlb ? "GLB" : "glTF") + ".");
   return window.ME22_lastCombined;
   } finally {
     ME22_endRenderHold();
@@ -3165,7 +3260,13 @@ function ME22_alongsideOnUp() { if (ME22_dragAlong) { ME22_dragAlong = null; if 
     ME22_remapAlongside(ME22_alongsideSel, xf, yf);
   });
   const sv = document.getElementById("alongsideSaveBtn");
-  if (sv) sv.addEventListener("click", () => { ME22_saveCombined(); });
+  if (sv) sv.addEventListener("click", () => { ME22_saveCombined("gltf"); });
+  // Both forms (2026-11-22): the GLB button beside the
+  // default glTF save - the same combined save, the
+  // binary form chosen on purpose. Source: Solomon's
+  // ruling, 2026-11-22.
+  const svGlb = document.getElementById("alongsideSaveGlbBtn");
+  if (svGlb) svGlb.addEventListener("click", () => { ME22_saveCombined("glb"); });
 })();
 
 window.ME3D_start = function (url, name) {
@@ -4723,7 +4824,9 @@ function ME22_commitPaint() {
     if (img) img.src = url;
     ME22_dirtyParts.add(pc.it.id);
     if (typeof computeMasks === "function") { try { computeMasks(CUR_IMAGES); } catch (e) {} }
-    status(pc.it.label + " painted - marked dirty; Save GLB and Finish carry the edit.");
+    // Loaded-form wording (2026-11-22): the status
+    // names the save by its button's new label.
+    status(pc.it.label + " painted - marked dirty; Save Loaded Form and Finish carry the edit.");
   } else {
     soloBase.src = url;
     $("soloImg").src = url;
