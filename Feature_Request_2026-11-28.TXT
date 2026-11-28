@@ -1,0 +1,12 @@
+Feature requests and work items — filed 2026-11-28 by the daily GitHub census job.
+Source: the work queue and progress records, jotted down fresh daily.
+Note: issue creation through the API is refused by the account credential
+(403), so today's items are filed in this file form, per the standing rule.
+A standing item is refreshed here, never duplicated; when an item completes,
+its closure is recorded in the daily run record and noted in this file.
+
+Repository: 3D_Model_Editor
+
+1. Version 22 issue closures
+   Eleven Version 22 issues stand open for closure by the maintainer; the fixes are built and shipped in the Version 22 release.
+
